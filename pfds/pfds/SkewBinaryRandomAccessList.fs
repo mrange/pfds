@@ -12,7 +12,7 @@ module SkewBinaryRandomAccessList =
             match (i, s, t) with
             | (0, 1, Leaf v)                    -> v
             | (0, _, Node (v, _, _))            -> v
-            | (_, _, Node (_, l, _)) when i < d -> lookupTree ri (i - 1) d l
+            | (_, _, Node (_, l, _)) when i <= d-> lookupTree ri (i - 1) d l
             | (_, _, Node (_, _, r)) when i > d -> lookupTree ri (i - 1 - d) d r
             | _                                 -> raise <| OutOfBoundsException ri
     
@@ -21,7 +21,7 @@ module SkewBinaryRandomAccessList =
             match (i, s, t) with
             | (0, 1, Leaf _)                        -> Leaf v
             | (0, _, Node (_, l, r))                -> Node (v, l, r)
-            | (_, _, Node (vv, l, rr)) when i < d   -> Node (vv, updateTree ri (i - 1) v d l, rr)
+            | (_, _, Node (vv, l, rr)) when i <= d  -> Node (vv, updateTree ri (i - 1) v d l, rr)
             | (_, _, Node (vv, ll, r)) when i > d   -> Node (vv, ll, updateTree ri (i - 1 - d) v d r)
             | _                                     -> raise <| OutOfBoundsException ri
 
@@ -37,13 +37,13 @@ module SkewBinaryRandomAccessList =
     module RAListDetails =
         let rec lookupRAList (ri : int) (i : int) (ral : RAList<'T>) : 'T =
             match ral with
-            | []                        -> raise <| OutOfBoundsException i
+            | []                        -> raise <| OutOfBoundsException ri
             | (i1, t1)::_ when i < i1   -> lookupTree ri i i1 t1
             | (i1, t1)::ws              -> lookupRAList ri (i - i1) ws
 
         let rec updateRAList (ri : int) (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> =
             match ral with
-            | []                        -> raise <| OutOfBoundsException i
+            | []                        -> raise <| OutOfBoundsException ri
             | (i1, t1)::ws when i < i1  -> (i1, (updateTree ri i v i1 t1))::ws
             | (i1, t1)::ws              -> (i1, t1)::updateRAList ri (i - i1) v ws
 

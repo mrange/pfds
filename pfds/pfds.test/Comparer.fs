@@ -64,7 +64,7 @@ module Comparer =
         let mc1             = ref ab1.Empty
         let mc2             = ref ab2.Empty
 
-        let length          = ref 0
+        let length          = ref initialSize
 
         let cont            = ref true
 
@@ -88,7 +88,8 @@ module Comparer =
 
         let getIdx l        =
             let i   = random.Next(0, l)
-            1.1 * (float i) |> round |> int
+            // 1.05 causes some reads to go out of bounds, we want to test this too.
+            1.05 * (float i) |> round |> int
 
         let getNext ()      = inc last
 
@@ -129,7 +130,7 @@ module Comparer =
             let run = !rrun
             ignore <| inc rrun
 
-            if run = 50 && Debugger.IsAttached then 
+            if run = -1 && Debugger.IsAttached then 
                 Debugger.Break ()
                 let a1 = ab1.ToArray !mc1
                 let a2 = ab2.ToArray !mc2
