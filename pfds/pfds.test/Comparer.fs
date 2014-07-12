@@ -1,6 +1,7 @@
 ﻿namespace pfds.test
 
 open System
+open System.Diagnostics
 open System.Linq
 
 module Comparer = 
@@ -48,6 +49,7 @@ module Comparer =
             ReferenceImplementation.toArray
 
     let compare 
+        (initialSize: int                       ) 
         (runs       : int                       ) 
         (actions    : (int*CollectionAction) [] )
         (name       : string                    )
@@ -117,10 +119,22 @@ module Comparer =
                 | exn -> Exception exn
 
         highlight <| sprintf "Starting test run: %s, running %d iterations" name runs
+
+        for i in 1..initialSize do
+            let i = getNext ()
+            mc1 := ab1.Cons i !mc1
+            mc2 := ab2.Cons i !mc2
         
         while !cont && (!rrun < runs) do
             let run = !rrun
             ignore <| inc rrun
+
+            if run = 50 && Debugger.IsAttached then 
+                Debugger.Break ()
+                let a1 = ab1.ToArray !mc1
+                let a2 = ab2.ToArray !mc2
+                info <| sprintf "a1 = %A" a1
+                info <| sprintf "a2 = %A" a2
 
             let pickAction  = random.Next (distribution.Length)
             let action      = distribution.[pickAction]
@@ -136,18 +150,18 @@ module Comparer =
                     mc2 := c2
                     true
                 | Exception e1  , Exception e2  ->
-                    error <| sprintf "%A(%i) operation inconsistency detected: Op1=%A, Op2=%A" action run e1 e2
+                    error <| sprintf "%A(%i) operation inconsistency detected: R1=%A, R2=%A" action run e1 e2
                     true
                 | Exception e1  , Value (v2, c2)->
-                    error <| sprintf "%A(%i) operation inconsistency detected: Op1=%A, Op2=%A" action run e1 v2
+                    error <| sprintf "%A(%i) operation inconsistency detected: R1=%A, R2=%A" action run e1 v2
                     mc2 := c2
                     false
                 | Value (v1, c1), Exception e2  ->
-                    error <| sprintf "%A(%i) operation inconsistency detected: Op1=%A, Op2=%A" action run v1 e2
+                    error <| sprintf "%A(%i) operation inconsistency detected: R1=%A, R2=%A" action run v1 e2
                     mc1 := c1
                     false
                 | Value (v1, c1), Value (v2, c2)-> 
-                    error <| sprintf "%A(%i) operation inconsistency detected: Op1=%A, Op2=%A" action run v1 v2
+                    error <| sprintf "%A(%i) operation inconsistency detected: R1=%A, R2=%A" action run v1 v2
                     mc1 := c1
                     mc2 := c2
                     false
@@ -203,8 +217,9 @@ module Comparer =
         !errors = 0
 
     let compareToReference 
+        (initialSize: int                       ) 
         (runs       : int                       ) 
         (actions    : (int*CollectionAction) [] )
         (name       : string                    )
         (ab         : CollectionAbstraction<'C2>) =
-        compare runs actions name reference ab
+        compare initialSize runs actions name reference ab

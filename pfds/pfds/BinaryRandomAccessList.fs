@@ -22,28 +22,27 @@ module BinaryRandomAccessList =
                 let (l,r),t = unconsImpl tt
                 l, One (r, t)
 
+        // TODO: Remove unnecessary obj creation
         let rec lookupImpl<'T> (ri : int) (i : int) (ral : RAList<'T>) : 'T =
             match i,ral with
             | _, Nil                -> raise <| OutOfBoundsException ri
             | 0, One (vv, _)        -> vv
-            | i, One (_, tt)        
+            | i, One (_, tt)        -> lookupImpl ri (i - 1) (Zero tt)
             | i, Zero tt            -> 
                 let l,r = lookupImpl ri (i / 2) tt
                 if i % 2 = 0 then l else r
 
         // TODO: Restore O (log n)
+        // TODO: Remove unnecessary obj creation
         let rec updateImpl<'T> (ri : int) (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> =
             match i,ral with
             | _, Nil                -> raise <| OutOfBoundsException ri
             | 0, One (_, tt)        -> One (v, tt)
-            | i, One (vv, tt)       -> 
-                let l,r = lookupImpl ri (i / 2) tt
-                let p = if i % 2 = 0 then v, r else l, v
-                One (vv, updateImpl ri (i - 1) p tt)
+            | i, One (vv, tt)       -> consImpl vv <| updateImpl ri (i - 1) v (Zero tt)
             | i, Zero tt            -> 
                 let l,r = lookupImpl ri (i / 2) tt
                 let p = if i % 2 = 0 then v, r else l, v
-                Zero <| updateImpl ri (i - 1) p tt
+                Zero <| updateImpl ri (i / 2) p tt
 
         let rec fillArrayFromRAList<'T> (push : 'T -> unit) (ral : RAList<'T>) : unit =
             match ral with

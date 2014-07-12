@@ -6,6 +6,21 @@ module ReferenceImplementation =
     
     type RAList<'T> = 'T list
 
+    module Details = 
+        let rec lookupImpl (ri : int) (i : int) (ral : RAList<'T>) : 'T = 
+            match i, ral with
+            | _, []     -> raise <| OutOfBoundsException ri
+            | 0, x::_   -> x
+            | i, _::xs  -> lookupImpl ri (i - 1) xs
+
+        let rec updateImpl (ri : int) (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> = 
+            match i, ral with
+            | _, []     -> raise <| OutOfBoundsException ri
+            | 0, _::xs  -> v::xs
+            | i, x::xs  -> x::updateImpl ri (i - 1) v xs
+
+    open Details
+
     let empty : RAList<'T>  = []
 
     let cons (v : 'T) (ral : RAList<'T>) : RAList<'T> = v::ral
@@ -21,19 +36,11 @@ module ReferenceImplementation =
     let tail (ral : RAList<'T>) = 
         let _,t = uncons ral
         t
+
+    let inline lookup i ral     = lookupImpl i i ral
+
+    let inline update i v ral   = updateImpl i i v ral
     
-    let rec lookup (i : int) (ral : RAList<'T>) : 'T = 
-        match i, ral with
-        | _, []     -> raise <| OutOfBoundsException i
-        | 0, x::_   -> x
-        | i, _::xs  -> lookup (i - 1) xs
-
-    let rec update (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> = 
-        match i, ral with
-        | _, []     -> raise <| OutOfBoundsException i
-        | 0, _::xs  -> v::xs
-        | i, x::xs  -> x::update (i - 1) v xs
-
     let toList (ral : RAList<'T>) = ral
 
     let toArray (ral : RAList<'T>) = ral |> List.toArray

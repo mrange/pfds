@@ -38,7 +38,7 @@ let main argv =
             1   , ValidateContent
         |]
 
-    let test name ral = compareToReference 1000 actions name ral
+    let test name ral = compareToReference 10 1000 actions name ral
 
     ignore <| test "BinaryRandomAccessList"     bral
     ignore <| test "SkewBinaryRandomAccessList" sbral
