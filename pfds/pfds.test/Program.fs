@@ -29,7 +29,18 @@ let main argv =
             SkewBinaryRandomAccessList.toList
             SkewBinaryRandomAccessList.toArray
 
+    let actions = 
+        [|
+            10  , Cons
+            10  , Uncons
+            10  , Lookup
+            10  , Update
+            1   , ValidateContent
+        |]
 
+    let test name ral = compareToReference 1000 actions name ral
 
-    printfn "%A" argv
-    0 // return an integer exit code
+    ignore <| test "BinaryRandomAccessList"     bral
+    ignore <| test "SkewBinaryRandomAccessList" sbral
+
+    0

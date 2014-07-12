@@ -42,6 +42,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
     <Compile Include="SkewBinaryRandomAccessList.fs" />
     <Compile Include="BinaryRandomAccessList.fs" />
   </ItemGroup>

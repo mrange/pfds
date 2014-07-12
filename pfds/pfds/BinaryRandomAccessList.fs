@@ -16,34 +16,34 @@ module BinaryRandomAccessList =
 
         let rec unconsImpl<'T> (ral : RAList<'T>) : 'T*RAList<'T> =
             match ral with
-            | Nil                   -> failwith "head requires non-empty list"
+            | Nil                   -> raise EmptyException
             | One (vv, tt)          -> vv, Zero tt
             | Zero tt               -> 
                 let (l,r),t = unconsImpl tt
                 l, One (r, t)
 
-        let rec lookupImpl<'T> (i : int) (ral : RAList<'T>) : 'T =
+        let rec lookupImpl<'T> (ri : int) (i : int) (ral : RAList<'T>) : 'T =
             match i,ral with
-            | _, Nil                -> failwith "List out of bounds"
+            | _, Nil                -> raise <| OutOfBoundsException ri
             | 0, One (vv, _)        -> vv
             | i, One (_, tt)        
             | i, Zero tt            -> 
-                let l,r = lookupImpl (i / 2) tt
+                let l,r = lookupImpl ri (i / 2) tt
                 if i % 2 = 0 then l else r
 
         // TODO: Restore O (log n)
-        let rec updateImpl<'T> (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> =
+        let rec updateImpl<'T> (ri : int) (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> =
             match i,ral with
-            | _, Nil                -> failwith "List out of bounds"
+            | _, Nil                -> raise <| OutOfBoundsException ri
             | 0, One (_, tt)        -> One (v, tt)
             | i, One (vv, tt)       -> 
-                let l,r = lookupImpl (i / 2) tt
+                let l,r = lookupImpl ri (i / 2) tt
                 let p = if i % 2 = 0 then v, r else l, v
-                One (vv, updateImpl (i - 1) p tt)
+                One (vv, updateImpl ri (i - 1) p tt)
             | i, Zero tt            -> 
-                let l,r = lookupImpl (i / 2) tt
+                let l,r = lookupImpl ri (i / 2) tt
                 let p = if i % 2 = 0 then v, r else l, v
-                Zero <| updateImpl (i - 1) p tt
+                Zero <| updateImpl ri (i - 1) p tt
 
         let rec fillArrayFromRAList<'T> (push : 'T -> unit) (ral : RAList<'T>) : unit =
             match ral with
@@ -51,15 +51,16 @@ module BinaryRandomAccessList =
             | Zero tt       -> 
                 fillArrayFromRAList (fun (l,r) -> push l; push r) tt
             | One (v, tt)   -> 
-                fillArrayFromRAList (fun (l,r) -> push v; push l; push r) tt
+                push v
+                fillArrayFromRAList (fun (l,r) -> push l; push r) tt
                    
     open Details
 
     let empty                   = Nil
     let inline cons v ral       = consImpl v ral
     let inline uncons ral       = unconsImpl ral
-    let inline lookup i ral     = lookupImpl i ral
-    let inline update i v ral   = updateImpl i v ral
+    let inline lookup i ral     = lookupImpl i i ral
+    let inline update i v ral   = updateImpl i i v ral
 
     let toArray (ral : RAList<'T>) : 'T [] = 
         let ra = ResizeArray<'T> ()

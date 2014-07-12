@@ -1,5 +1,7 @@
 ﻿namespace pfds.test
 
+open pfds
+
 module ReferenceImplementation = 
     
     type RAList<'T> = 'T list
@@ -9,7 +11,7 @@ module ReferenceImplementation =
     let cons (v : 'T) (ral : RAList<'T>) : RAList<'T> = v::ral
     let uncons (ral : RAList<'T>) : 'T*RAList<'T> = 
         match ral with
-        | []    -> failwith "list must be non-empty"
+        | []    -> raise EmptyException
         | x::xs -> x,xs
 
     let head (ral : RAList<'T>) = 
@@ -22,13 +24,13 @@ module ReferenceImplementation =
     
     let rec lookup (i : int) (ral : RAList<'T>) : 'T = 
         match i, ral with
-        | _, []     -> failwith "List out of bound"
+        | _, []     -> raise <| OutOfBoundsException i
         | 0, x::_   -> x
         | i, _::xs  -> lookup (i - 1) xs
 
     let rec update (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> = 
         match i, ral with
-        | _, []     -> failwith "List out of bound"
+        | _, []     -> raise <| OutOfBoundsException i
         | 0, _::xs  -> v::xs
         | i, x::xs  -> x::update (i - 1) v xs
 
