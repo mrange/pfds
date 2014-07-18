@@ -18,9 +18,16 @@ open System.Linq
 
 module Comparer = 
 
+    [<StructuralEquality>]
+    [<NoComparison>]
+    exception UnsupportedOperation
+
     type CollectionAction = 
         | Cons
+        | Snoc
         | Uncons
+        | Head
+        | Tail
         | Lookup
         | Update
         | ValidateContent
@@ -33,32 +40,60 @@ module Comparer =
         {
             Empty   : 'C
             Cons    : int   -> 'C       -> 'C
+            Snoc    : int   -> 'C       -> 'C
             Uncons  : 'C    -> int*'C
+            Head    : 'C    -> int
+            Tail    : 'C    -> 'C
             Lookup  : int   -> 'C       -> int
             Update  : int   -> int      -> 'C    -> 'C
             ToList  : 'C    -> int list
             ToArray : 'C    -> int []
         }
-        static member New e c u l upd tl ta = 
+        static member NewRAList e c u l upd tl ta = 
             {
                 Empty       = e
                 Cons        = c
+                Snoc        = fun _ c -> raise UnsupportedOperation
                 Uncons      = u
+                Head        = fun _ -> raise UnsupportedOperation
+                Tail        = fun c -> raise UnsupportedOperation
                 Lookup      = l
                 Update      = upd
                 ToList      = tl
                 ToArray     = ta
             }
 
-    let reference = 
-        CollectionAbstraction<ReferenceImplementation.RAList<int>>.New 
-            ReferenceImplementation.empty
-            ReferenceImplementation.cons 
-            ReferenceImplementation.uncons
-            ReferenceImplementation.lookup
-            ReferenceImplementation.update
-            ReferenceImplementation.toList
-            ReferenceImplementation.toArray
+        static member NewQueue e s h t tl ta = 
+            {
+                Empty       = e
+                Cons        = fun _ c -> raise UnsupportedOperation
+                Snoc        = s
+                Uncons      = fun c -> raise UnsupportedOperation
+                Head        = h
+                Tail        = t
+                Lookup      = fun _ _  -> raise UnsupportedOperation
+                Update      = fun _ _ c-> raise UnsupportedOperation
+                ToList      = tl
+                ToArray     = ta
+            }
+    let referenceRAList = 
+        CollectionAbstraction<ReferenceImplementation.RAList.RAList<int>>.NewRAList 
+            ReferenceImplementation.RAList.empty
+            ReferenceImplementation.RAList.cons 
+            ReferenceImplementation.RAList.uncons
+            ReferenceImplementation.RAList.lookup
+            ReferenceImplementation.RAList.update
+            ReferenceImplementation.RAList.toList
+            ReferenceImplementation.RAList.toArray
+
+    let referenceQueue = 
+        CollectionAbstraction<ReferenceImplementation.Queue.Queue<int>>.NewQueue
+            ReferenceImplementation.Queue.empty
+            ReferenceImplementation.Queue.snoc 
+            ReferenceImplementation.Queue.head
+            ReferenceImplementation.Queue.tail
+            ReferenceImplementation.Queue.toList
+            ReferenceImplementation.Queue.toArray
 
     let compare 
         (initialSize: int                       ) 
@@ -189,9 +224,33 @@ module Comparer =
                         true
                     else
                         false
+                | Snoc ->
+                    let i = getNext ()
+                    let makeSnoc (ab : CollectionAbstraction<'C>) c = fun () -> (), ab.Snoc i !c
+                    if compareActions (makeSnoc ab1 mc1) (makeSnoc ab2 mc2) then
+                        ignore <| inc length
+                        true
+                    else
+                        false
                 | Uncons ->
                     let makeUncons (ab : CollectionAbstraction<'C>) c = fun () -> ab.Uncons !c
                     if compareActions (makeUncons ab1 mc1) (makeUncons ab2 mc2) then
+                        ignore <| dec length
+                        true
+                    else
+                        false
+
+                | Head ->
+                    let makeHead (ab : CollectionAbstraction<'C>) c = fun () -> ab.Head !c, !c
+                    if compareActions (makeHead ab1 mc1) (makeHead ab2 mc2) then
+                        ignore <| dec length
+                        true
+                    else
+                        false
+                        
+                | Tail ->
+                    let makeTail (ab : CollectionAbstraction<'C>) c = fun () -> (), ab.Tail !c
+                    if compareActions (makeTail ab1 mc1) (makeTail ab2 mc2) then
                         ignore <| dec length
                         true
                     else
@@ -229,10 +288,18 @@ module Comparer =
             
         !errors = 0
 
-    let compareToReference 
+    let compareToReferenceRAList 
         (initialSize: int                       ) 
         (runs       : int                       ) 
         (actions    : (int*CollectionAction) [] )
         (name       : string                    )
         (ab         : CollectionAbstraction<'C2>) =
-        compare initialSize runs actions name reference ab
+        compare initialSize runs actions name referenceRAList ab
+
+    let compareToReferenceQueue 
+        (initialSize: int                       ) 
+        (runs       : int                       ) 
+        (actions    : (int*CollectionAction) [] )
+        (name       : string                    )
+        (ab         : CollectionAbstraction<'C2>) =
+        compare initialSize runs actions name referenceQueue ab

@@ -14,15 +14,13 @@ namespace pfds
 
 module BootstrappedQueue =
 
-    // TODO: Uncurry helper functions
+    // TODO: Represent small queues as tuples
 
     type Queue<'T> = 
         | Empty
         | Queued of 'T list*int*Queue<Lazy<'T list>>*'T list
 
     module Details =
-        let cutoff = 10
-
         let rec checkInnerInvariant<'T> (t : 'T list*int*Queue<Lazy<'T list>>*'T list) : Queue<'T> = 
             match t with
             | ([], _, Empty, _) -> Empty
@@ -37,12 +35,12 @@ module BootstrappedQueue =
                 checkInnerInvariant (f, lenm, m, r)
             else
                 let lenm    = (lenm + r.Length)
-                let m       = snocImpl m (lazy List.rev r)
+                let m       = snocImpl (lazy List.rev r, m)
                 checkInnerInvariant (f, lenm, m, [])
 
-        and snocImpl<'T> (q : Queue<'T>) (v : 'T) : Queue<'T> = 
+        and snocImpl<'T> (v : 'T, q : Queue<'T>) : Queue<'T> = 
             match q with 
-            | Empty                     -> Queued ([v], 0, Empty, [])
+            | Empty                     -> Queued ([v], 0, Empty, [])    
             | Queued (f, lenm, m, r)    -> checkInvariant (f, lenm, m, v::r)
 
         and headImpl<'T> (q : Queue<'T>) : 'T = 
@@ -57,10 +55,35 @@ module BootstrappedQueue =
             | Queued (_::vs, lenm, m, r)    -> checkInvariant (vs, lenm, m, r)
             | _                             -> raise <| InvariantBrokenException q
 
+        let rec fillArrayFromQueue<'T> (push: 'T -> unit, q : Queue<'T>) : unit =
+            match q with
+            | Empty                     -> ()
+            | Queued (f, lenm, m, r)    ->
+                let p (lv : Lazy<'T list>) = 
+                    let v = lv.Value
+                    v |> List.iter push
+
+                f |> List.iter push
+                fillArrayFromQueue (p, m)
+                r |> List.rev |> List.iter push
+        
+
     open Details
 
     let empty = Empty
 
-    let inline snoc q v = snocImpl q v 
+    let inline snoc v q = snocImpl (v, q)
     let inline head q   = headImpl q
     let inline tail q   = tailImpl q
+
+    let toArray (q : Queue<'T>) : 'T [] = 
+        let ra = ResizeArray<'T> ()
+        fillArrayFromQueue (ra.Add, q)
+        ra.ToArray ()
+
+    let toList (q : Queue<'T>) : List<'T> = 
+        let ra = ResizeArray<'T> ()
+        fillArrayFromQueue (ra.Add, q)
+        ra |> Seq.toList
+   
+   

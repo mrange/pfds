@@ -21,7 +21,7 @@ open Comparer
 let main argv = 
     
     let bral = 
-        CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.New 
+        CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.NewRAList 
             BinaryRandomAccessList.empty
             BinaryRandomAccessList.cons 
             BinaryRandomAccessList.uncons
@@ -31,7 +31,7 @@ let main argv =
             BinaryRandomAccessList.toArray
 
     let sbral = 
-        CollectionAbstraction<SkewBinaryRandomAccessList.RAList<int>>.New 
+        CollectionAbstraction<SkewBinaryRandomAccessList.RAList<int>>.NewRAList 
             SkewBinaryRandomAccessList.empty
             SkewBinaryRandomAccessList.cons 
             SkewBinaryRandomAccessList.uncons
@@ -40,7 +40,16 @@ let main argv =
             SkewBinaryRandomAccessList.toList
             SkewBinaryRandomAccessList.toArray
 
-    let actions = 
+    let bq = 
+        CollectionAbstraction<BootstrappedQueue.Queue<int>>.NewQueue
+            BootstrappedQueue.empty
+            BootstrappedQueue.snoc 
+            BootstrappedQueue.head
+            BootstrappedQueue.tail
+            BootstrappedQueue.toList
+            BootstrappedQueue.toArray
+
+    let raactions = 
         [|
             10  , Cons
             10  , Uncons
@@ -49,9 +58,19 @@ let main argv =
             1   , ValidateContent
         |]
 
-    let test name ral = compareToReference 10 10000 actions name ral
+    let qactions = 
+        [|
+            10  , Snoc
+            20  , Head
+            10  , Tail
+            1   , ValidateContent
+        |]
 
-    ignore <| test "SkewBinaryRandomAccessList" sbral
-    ignore <| test "BinaryRandomAccessList"     bral
+    let ralist name ral = compareToReferenceRAList 10 10000 raactions name ral
+    let queue name q    = compareToReferenceRAList 10 10000 qactions name q
+
+    ignore <| ralist "SkewBinaryRandomAccessList" sbral
+    ignore <| ralist "BinaryRandomAccessList"     bral
+    ignore <| queue "BootstrappedQueue" bq
 
     0
