@@ -1,6 +1,20 @@
-﻿namespace pfds
+﻿// ----------------------------------------------------------------------------------------------
+// Copyright (c) Mårten Rånge.
+// ----------------------------------------------------------------------------------------------
+// This source code is subject to terms and conditions of the Microsoft Public License. A 
+// copy of the license can be found in the License.html file at the root of this distribution. 
+// If you cannot locate the  Microsoft Public License, please send an email to 
+// dlr@microsoft.com. By using this source code in any fashion, you are agreeing to be bound 
+//  by the terms of the Microsoft Public License.
+// ----------------------------------------------------------------------------------------------
+// You must not remove this notice, or any other, from this software.
+// ----------------------------------------------------------------------------------------------
+
+namespace pfds
 
 module BinaryRandomAccessList =
+
+    // TODO: Uncurry helper functions
 
     type RAList<'T> = 
         | Nil
@@ -22,27 +36,27 @@ module BinaryRandomAccessList =
                 let (l,r),t = unconsImpl tt
                 l, One (r, t)
 
-        // TODO: Remove unnecessary obj creation
         let rec lookupImpl<'T> (ri : int) (i : int) (ral : RAList<'T>) : 'T =
             match i,ral with
             | _, Nil                -> raise <| OutOfBoundsException ri
             | 0, One (vv, _)        -> vv
-            | i, One (_, tt)        -> lookupImpl ri (i - 1) (Zero tt)
+            | i, One (_, tt)        -> 
+                let i = i - 1
+                let l,r = lookupImpl ri (i / 2) tt
+                if i % 2 = 0 then l else r
             | i, Zero tt            -> 
                 let l,r = lookupImpl ri (i / 2) tt
                 if i % 2 = 0 then l else r
 
-        // TODO: Restore O (log n)
         // TODO: Remove unnecessary obj creation
-        let rec updateImpl<'T> (ri : int) (i : int) (v : 'T) (ral : RAList<'T>) : RAList<'T> =
+        let rec updateImpl<'T> (ri : int) (i : int) (u : 'T->'T) (ral : RAList<'T>) : RAList<'T> =
             match i,ral with
             | _, Nil                -> raise <| OutOfBoundsException ri
-            | 0, One (_, tt)        -> One (v, tt)
-            | i, One (vv, tt)       -> consImpl vv <| updateImpl ri (i - 1) v (Zero tt)
+            | 0, One (vv, tt)       -> One (u vv, tt)
+            | i, One (vv, tt)       -> consImpl vv <| updateImpl ri (i - 1) u (Zero tt)
             | i, Zero tt            -> 
-                let l,r = lookupImpl ri (i / 2) tt
-                let p = if i % 2 = 0 then v, r else l, v
-                Zero <| updateImpl ri (i / 2) p tt
+                let ff (l,r) = if i % 2 = 0 then u l, r else l, u r
+                Zero <| updateImpl ri (i / 2) ff tt
 
         let rec fillArrayFromRAList<'T> (push : 'T -> unit) (ral : RAList<'T>) : unit =
             match ral with
@@ -59,7 +73,7 @@ module BinaryRandomAccessList =
     let inline cons v ral       = consImpl v ral
     let inline uncons ral       = unconsImpl ral
     let inline lookup i ral     = lookupImpl i i ral
-    let inline update i v ral   = updateImpl i i v ral
+    let inline update i v ral   = updateImpl i i (fun _ -> v) ral
 
     let toArray (ral : RAList<'T>) : 'T [] = 
         let ra = ResizeArray<'T> ()

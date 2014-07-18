@@ -45,6 +45,7 @@
     <Compile Include="Common.fs" />
     <Compile Include="SkewBinaryRandomAccessList.fs" />
     <Compile Include="BinaryRandomAccessList.fs" />
+    <Compile Include="BootstrappedQueue.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
