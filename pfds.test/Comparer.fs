@@ -173,7 +173,8 @@ module Comparer =
             let run = !rrun
             ignore <| inc rrun
 
-            if run = -1 && Debugger.IsAttached then 
+            // Used when debugging failures                        
+            if run > Int32.MaxValue && Debugger.IsAttached then 
                 Debugger.Break ()
                 let a1 = ab1.ToArray !mc1
                 let a2 = ab2.ToArray !mc2

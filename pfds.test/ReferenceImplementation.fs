@@ -89,6 +89,6 @@ module ReferenceImplementation =
 
         let fromSeq (s : seq<'T>) : Queue<'T>   = s |> Seq.toList,[]
 
-        let toList ((fs, rs) : Queue<'T>)       = fs |> List.append (rs |> List.rev)
+        let toList ((fs, rs) : Queue<'T>)       = List.append fs (rs |> List.rev)
 
         let toArray (q : Queue<'T>)             = q |> toList |> List.toArray
