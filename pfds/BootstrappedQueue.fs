@@ -76,14 +76,21 @@ module BootstrappedQueue =
     let inline head q   = headImpl q
     let inline tail q   = tailImpl q
 
-    let toArray (q : Queue<'T>) : 'T [] = 
+    let fromSeq (s : seq<'T>) : Queue<'T>   =
+        let mutable q = empty
+        for v in s do
+            q <- q |> snoc v
+        q
+
+    let toArray (q : Queue<'T>) : 'T []     = 
         let ra = ResizeArray<'T> ()
         fillArrayFromQueue (ra.Add, q)
         ra.ToArray ()
 
-    let toList (q : Queue<'T>) : List<'T> = 
+    let toList (q : Queue<'T>) : List<'T>   = 
         let ra = ResizeArray<'T> ()
         fillArrayFromQueue (ra.Add, q)
         ra |> Seq.toList
    
    
+

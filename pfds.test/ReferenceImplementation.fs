@@ -44,21 +44,23 @@ module ReferenceImplementation =
             | []    -> raise EmptyException
             | x::xs -> x,xs
 
-        let head (ral : RAList<'T>) = 
+        let head (ral : RAList<'T>)             = 
             let h,_ = uncons ral
             h
 
-        let tail (ral : RAList<'T>) = 
+        let tail (ral : RAList<'T>)             = 
             let _,t = uncons ral
             t
 
-        let inline lookup i ral     = lookupImpl i i ral
+        let inline lookup i ral                 = lookupImpl i i ral
 
-        let inline update i v ral   = updateImpl i i v ral
+        let inline update i v ral               = updateImpl i i v ral
     
-        let toList (ral : RAList<'T>) = ral
+        let fromSeq (s : seq<'T>) : RAList<'T>  = s |> Seq.toList
 
-        let toArray (ral : RAList<'T>) = ral |> List.toArray
+        let toList (ral : RAList<'T>)           = ral
+
+        let toArray (ral : RAList<'T>)          = ral |> List.toArray
 
 
     module Queue = 
@@ -84,6 +86,8 @@ module ReferenceImplementation =
         let tail (q : Queue<'T>) : Queue<'T>    = 
             let _, t = uncons q
             t
+
+        let fromSeq (s : seq<'T>) : Queue<'T>   = s |> Seq.toList,[]
 
         let toList ((fs, rs) : Queue<'T>)       = fs |> List.append (rs |> List.rev)
 

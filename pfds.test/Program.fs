@@ -22,7 +22,7 @@ let main argv =
     
     let bral = 
         CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.NewRAList 
-            BinaryRandomAccessList.empty
+            BinaryRandomAccessList.fromSeq
             BinaryRandomAccessList.cons 
             BinaryRandomAccessList.uncons
             BinaryRandomAccessList.lookup
@@ -32,7 +32,7 @@ let main argv =
 
     let sbral = 
         CollectionAbstraction<SkewBinaryRandomAccessList.RAList<int>>.NewRAList 
-            SkewBinaryRandomAccessList.empty
+            SkewBinaryRandomAccessList.fromSeq
             SkewBinaryRandomAccessList.cons 
             SkewBinaryRandomAccessList.uncons
             SkewBinaryRandomAccessList.lookup
@@ -42,7 +42,7 @@ let main argv =
 
     let bq = 
         CollectionAbstraction<BootstrappedQueue.Queue<int>>.NewQueue
-            BootstrappedQueue.empty
+            BootstrappedQueue.fromSeq
             BootstrappedQueue.snoc 
             BootstrappedQueue.head
             BootstrappedQueue.tail
@@ -66,11 +66,23 @@ let main argv =
             1   , ValidateContent
         |]
 
-    let ralist name ral = compareToReferenceRAList 10 10000 raactions name ral
-    let queue name q    = compareToReferenceRAList 10 10000 qactions name q
+    let iterations      = 10000
 
-    ignore <| ralist "SkewBinaryRandomAccessList" sbral
-    ignore <| ralist "BinaryRandomAccessList"     bral
-    ignore <| queue "BootstrappedQueue" bq
+    let getName (n : string) (sz : int) = sprintf "%s, initial size: %d" n sz
+
+    let ralist name initialSize ral = compareToReferenceRAList  initialSize iterations raactions (getName name initialSize) ral
+    let queue  name initialSize q   = compareToReferenceQueue   initialSize iterations qactions  (getName name initialSize) q
+
+    let initialSizes = 
+        [
+            0
+            10
+            100
+        ]
+
+    for initialSize in initialSizes do
+        ignore <| ralist    "SkewBinaryRandomAccessList"    initialSize sbral
+        ignore <| ralist    "BinaryRandomAccessList"        initialSize bral
+        ignore <| queue     "BootstrappedQueue"             initialSize bq
 
     0

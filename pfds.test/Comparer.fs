@@ -38,20 +38,20 @@ module Comparer =
 
     type CollectionAbstraction<'C> = 
         {
-            Empty   : 'C
-            Cons    : int   -> 'C       -> 'C
-            Snoc    : int   -> 'C       -> 'C
-            Uncons  : 'C    -> int*'C
-            Head    : 'C    -> int
-            Tail    : 'C    -> 'C
-            Lookup  : int   -> 'C       -> int
-            Update  : int   -> int      -> 'C    -> 'C
-            ToList  : 'C    -> int list
-            ToArray : 'C    -> int []
+            Initial : seq<int>  -> 'C
+            Cons    : int       -> 'C       -> 'C
+            Snoc    : int       -> 'C       -> 'C
+            Uncons  : 'C        -> int*'C
+            Head    : 'C        -> int
+            Tail    : 'C        -> 'C
+            Lookup  : int       -> 'C       -> int
+            Update  : int       -> int      -> 'C    -> 'C
+            ToList  : 'C        -> int list
+            ToArray : 'C        -> int []
         }
-        static member NewRAList e c u l upd tl ta = 
+        static member NewRAList i c u l upd tl ta = 
             {
-                Empty       = e
+                Initial     = i
                 Cons        = c
                 Snoc        = fun _ c -> raise UnsupportedOperation
                 Uncons      = u
@@ -63,9 +63,9 @@ module Comparer =
                 ToArray     = ta
             }
 
-        static member NewQueue e s h t tl ta = 
+        static member NewQueue i s h t tl ta = 
             {
-                Empty       = e
+                Initial     = i
                 Cons        = fun _ c -> raise UnsupportedOperation
                 Snoc        = s
                 Uncons      = fun c -> raise UnsupportedOperation
@@ -78,7 +78,7 @@ module Comparer =
             }
     let referenceRAList = 
         CollectionAbstraction<ReferenceImplementation.RAList.RAList<int>>.NewRAList 
-            ReferenceImplementation.RAList.empty
+            ReferenceImplementation.RAList.fromSeq
             ReferenceImplementation.RAList.cons 
             ReferenceImplementation.RAList.uncons
             ReferenceImplementation.RAList.lookup
@@ -88,7 +88,7 @@ module Comparer =
 
     let referenceQueue = 
         CollectionAbstraction<ReferenceImplementation.Queue.Queue<int>>.NewQueue
-            ReferenceImplementation.Queue.empty
+            ReferenceImplementation.Queue.fromSeq
             ReferenceImplementation.Queue.snoc 
             ReferenceImplementation.Queue.head
             ReferenceImplementation.Queue.tail
@@ -107,9 +107,6 @@ module Comparer =
 
         let errors          = ref 0
         let last            = ref 0
-
-        let mc1             = ref ab1.Empty
-        let mc2             = ref ab2.Empty
 
         let length          = ref initialSize
 
@@ -140,6 +137,10 @@ module Comparer =
 
         let getNext ()      = inc last
 
+        let initial         = [| for i in 1..initialSize -> getNext () |] :> seq<int>
+        let mc1             = ref (initial |> ab1.Initial)
+        let mc2             = ref (initial |> ab2.Initial)
+
         let write c (prelude : string) (msg : string) = 
             let p = Console.ForegroundColor
             Console.ForegroundColor <- c
@@ -168,11 +169,6 @@ module Comparer =
 
         highlight <| sprintf "Starting test run: %s, running %d iterations" name runs
 
-        for i in 1..initialSize do
-            let i = getNext ()
-            mc1 := ab1.Cons i !mc1
-            mc2 := ab2.Cons i !mc2
-        
         while !cont && (!rrun < runs) do
             let run = !rrun
             ignore <| inc rrun

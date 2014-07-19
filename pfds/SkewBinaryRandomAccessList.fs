@@ -12,6 +12,8 @@
 
 namespace pfds
 
+open System.Linq
+
 module SkewBinaryRandomAccessList = 
 
     // TODO: Uncurry helper functions
@@ -87,6 +89,12 @@ module SkewBinaryRandomAccessList =
     let inline lookup i ral     = lookupRAList (i, i, ral)
 
     let inline update i v ral   = updateRAList (i, i, v, ral)
+
+    let fromSeq (s : seq<'T>) : RAList<'T>   =
+        let mutable ral = empty
+        for v in s.Reverse () do
+            ral <- ral |> cons v
+        ral
 
     let toArray (ral : RAList<'T>) : 'T [] = 
         let ra = ResizeArray<'T> ()

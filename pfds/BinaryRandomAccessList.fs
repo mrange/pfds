@@ -12,6 +12,8 @@
 
 namespace pfds
 
+open System.Linq                   
+
 module BinaryRandomAccessList =
 
     type RAList<'T> = 
@@ -64,7 +66,7 @@ module BinaryRandomAccessList =
             | One (v, tt)   -> 
                 push v
                 fillArrayFromRAList ((fun (l,r) -> push l; push r), tt)
-                   
+
     open Details
 
     let empty                   = Nil
@@ -72,6 +74,12 @@ module BinaryRandomAccessList =
     let inline uncons ral       = unconsImpl ral
     let inline lookup i ral     = lookupImpl (i, i, ral)
     let inline update i v ral   = updateImpl (i, i, (fun _ -> v), ral)
+
+    let fromSeq (s : seq<'T>) : RAList<'T>   =
+        let mutable ral = empty
+        for v in s.Reverse () do
+            ral <- ral |> cons v
+        ral
 
     let toArray (ral : RAList<'T>) : 'T [] = 
         let ra = ResizeArray<'T> ()
