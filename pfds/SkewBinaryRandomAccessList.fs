@@ -16,8 +16,6 @@ open System.Linq
 
 module SkewBinaryRandomAccessList = 
 
-    // TODO: Uncurry helper functions
-
     module TreeDetails =     
         type Tree<'T> = 
             | Leaf of 'T

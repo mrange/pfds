@@ -175,11 +175,11 @@ module Comparer =
 
             // Used when debugging failures                        
             if run > Int32.MaxValue && Debugger.IsAttached then 
-                Debugger.Break ()
                 let a1 = ab1.ToArray !mc1
                 let a2 = ab2.ToArray !mc2
                 info <| sprintf "a1 = %A" a1
                 info <| sprintf "a2 = %A" a2
+                Debugger.Break ()
 
             let pickAction  = random.Next (distribution.Length)
             let action      = distribution.[pickAction]
