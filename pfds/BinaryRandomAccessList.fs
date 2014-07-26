@@ -71,7 +71,7 @@ module BinaryRandomAccessList =
     open Details
 
     let empty                       = Nil
-    let isEmpty (ral : RAList<'T>)  = 
+    let isEmpty (ral : RAList<'T>)  =
         match ral with
         | Nil   -> true
         | _     -> false

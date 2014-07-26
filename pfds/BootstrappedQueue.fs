@@ -23,7 +23,7 @@ module BootstrappedQueue =
 
     module Details =
 
-        let shortMaxLength = 4                        
+        let shortMaxLength = 4
 
         let isEmptyImpl (q : Queue<'T>) =
             match q with
@@ -40,7 +40,7 @@ module BootstrappedQueue =
 
             let mutable l = f
 
-            let vs = 
+            let vs =
                 seq {
                     for v in f do
                         yield v
@@ -90,7 +90,7 @@ module BootstrappedQueue =
                 checkInnerInvariant (f, lenm, m, [])
             else
                 createShort (f, lenm, m, r)
-                
+
 
         and snocImpl<'T> (v : 'T, q : Queue<'T>) : Queue<'T> =
             match q with

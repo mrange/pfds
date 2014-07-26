@@ -70,12 +70,12 @@ module ReferenceImplementation =
 
         let empty : Queue<'T> = [], []
 
-        let isEmpty (q : Queue<'T>) = 
+        let isEmpty (q : Queue<'T>) =
             match q with
             | [], []    -> true
             | _         -> false
 
-        let snoc (v : 'T) (q : Queue<'T>) : Queue<'T> = 
+        let snoc (v : 'T) (q : Queue<'T>) : Queue<'T> =
             match q with
             | [], []    -> [v], []
             | fs, rs    -> fs,v::rs
