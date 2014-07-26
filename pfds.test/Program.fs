@@ -62,6 +62,16 @@ let main argv =
             BatchedQueue.toList
             BatchedQueue.toArray
 
+    let sq =
+        CollectionAbstraction<StreamedQueue.Queue<int>>.NewQueue
+            StreamedQueue.fromSeq
+            StreamedQueue.isEmpty
+            StreamedQueue.snoc
+            StreamedQueue.head
+            StreamedQueue.tail
+            StreamedQueue.toList
+            StreamedQueue.toArray
+
     let raactions =
         [|
             10  , IsEmpty
@@ -100,5 +110,6 @@ let main argv =
         ignore <| ralist    "BinaryRandomAccessList"        initialSize bral
         ignore <| queue     "BootstrappedQueue"             initialSize bq1
         ignore <| queue     "BatchedQueue"                  initialSize bq2
+        ignore <| queue     "StreamedQueue"                 initialSize sq
 
     0
