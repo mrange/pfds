@@ -23,6 +23,7 @@ module Comparer =
     exception UnsupportedOperation
 
     type CollectionAction =
+        | IsEmpty
         | Cons
         | Snoc
         | Uncons
@@ -39,6 +40,7 @@ module Comparer =
     type CollectionAbstraction<'C> =
         {
             Initial : seq<int>  -> 'C
+            IsEmpty : 'C        -> bool
             Cons    : int       -> 'C       -> 'C
             Snoc    : int       -> 'C       -> 'C
             Uncons  : 'C        -> int*'C
@@ -49,9 +51,10 @@ module Comparer =
             ToList  : 'C        -> int list
             ToArray : 'C        -> int []
         }
-        static member NewRAList i c u l upd tl ta =
+        static member NewRAList i ie c u l upd tl ta =
             {
                 Initial     = i
+                IsEmpty     = ie
                 Cons        = c
                 Snoc        = fun _ c -> raise UnsupportedOperation
                 Uncons      = u
@@ -63,9 +66,10 @@ module Comparer =
                 ToArray     = ta
             }
 
-        static member NewQueue i s h t tl ta =
+        static member NewQueue i ie s h t tl ta =
             {
                 Initial     = i
+                IsEmpty     = ie
                 Cons        = fun _ c -> raise UnsupportedOperation
                 Snoc        = s
                 Uncons      = fun c -> raise UnsupportedOperation
@@ -79,6 +83,7 @@ module Comparer =
     let referenceRAList =
         CollectionAbstraction<ReferenceImplementation.RAList.RAList<int>>.NewRAList
             ReferenceImplementation.RAList.fromSeq
+            ReferenceImplementation.RAList.isEmpty
             ReferenceImplementation.RAList.cons
             ReferenceImplementation.RAList.uncons
             ReferenceImplementation.RAList.lookup
@@ -89,6 +94,7 @@ module Comparer =
     let referenceQueue =
         CollectionAbstraction<ReferenceImplementation.Queue.Queue<int>>.NewQueue
             ReferenceImplementation.Queue.fromSeq
+            ReferenceImplementation.Queue.isEmpty
             ReferenceImplementation.Queue.snoc
             ReferenceImplementation.Queue.head
             ReferenceImplementation.Queue.tail
@@ -213,6 +219,12 @@ module Comparer =
 
             cont :=
                 match action with
+                | IsEmpty ->
+                    let makeIsEmpty (ab : CollectionAbstraction<'C>) c = fun () -> ab.IsEmpty !c, !c
+                    if compareActions (makeIsEmpty ab1 mc1) (makeIsEmpty ab2 mc2) then
+                        true
+                    else
+                        true
                 | Cons ->
                     let i = getNext ()
                     let makeCons (ab : CollectionAbstraction<'C>) c = fun () -> (), ab.Cons i !c

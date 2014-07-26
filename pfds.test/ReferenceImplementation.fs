@@ -37,7 +37,7 @@ module ReferenceImplementation =
         open Details
 
         let empty : RAList<'T>  = []
-
+        let isEmpty (ral : RAList<'T>) = ral.Length = 0
         let cons (v : 'T) (ral : RAList<'T>) : RAList<'T> = v::ral
         let uncons (ral : RAList<'T>) : 'T*RAList<'T> =
             match ral with
@@ -65,27 +65,33 @@ module ReferenceImplementation =
 
     module Queue =
 
+        // Invariant: Non-empty queues front queue is non-empty
         type Queue<'T> = 'T list*'T list
 
         let empty : Queue<'T> = [], []
 
-        let snoc (v : 'T) ((fs, rs) : Queue<'T>) : Queue<'T> = fs, v::rs
-
-        let uncons (q : Queue<'T>) : 'T*Queue<'T> =
+        let isEmpty (q : Queue<'T>) = 
             match q with
-            | [], []    -> raise EmptyException
-            | f::fs, rs -> f, (fs, rs)
-            | _, rs     ->
-                let fs = rs |> List.rev
-                fs.Head, (fs.Tail, [])
+            | [], []    -> true
+            | _         -> false
+
+        let snoc (v : 'T) (q : Queue<'T>) : Queue<'T> = 
+            match q with
+            | [], []    -> [v], []
+            | fs, rs    -> fs,v::rs
 
         let head (q : Queue<'T>) : 'T           =
-            let h, _ = uncons q
-            h
+            match q with
+            | [], []    -> raise EmptyException
+            | f::_,_    -> f
+            | _         -> raise <| InvariantBrokenException q
 
         let tail (q : Queue<'T>) : Queue<'T>    =
-            let _, t = uncons q
-            t
+            match q with
+            | [], []    -> raise EmptyException
+            | [f], rs   -> rs |> List.rev, []
+            | _::fs, rs -> fs, rs
+            | _         -> raise <| InvariantBrokenException q
 
         let fromSeq (s : seq<'T>) : Queue<'T>   = s |> Seq.toList,[]
 

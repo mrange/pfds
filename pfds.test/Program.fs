@@ -23,6 +23,7 @@ let main argv =
     let bral =
         CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.NewRAList
             BinaryRandomAccessList.fromSeq
+            BinaryRandomAccessList.isEmpty
             BinaryRandomAccessList.cons
             BinaryRandomAccessList.uncons
             BinaryRandomAccessList.lookup
@@ -33,6 +34,7 @@ let main argv =
     let sbral =
         CollectionAbstraction<SkewBinaryRandomAccessList.RAList<int>>.NewRAList
             SkewBinaryRandomAccessList.fromSeq
+            SkewBinaryRandomAccessList.isEmpty
             SkewBinaryRandomAccessList.cons
             SkewBinaryRandomAccessList.uncons
             SkewBinaryRandomAccessList.lookup
@@ -40,17 +42,29 @@ let main argv =
             SkewBinaryRandomAccessList.toList
             SkewBinaryRandomAccessList.toArray
 
-    let bq =
+    let bq1 =
         CollectionAbstraction<BootstrappedQueue.Queue<int>>.NewQueue
             BootstrappedQueue.fromSeq
+            BootstrappedQueue.isEmpty
             BootstrappedQueue.snoc
             BootstrappedQueue.head
             BootstrappedQueue.tail
             BootstrappedQueue.toList
             BootstrappedQueue.toArray
 
+    let bq2 =
+        CollectionAbstraction<BatchedQueue.Queue<int>>.NewQueue
+            BatchedQueue.fromSeq
+            BatchedQueue.isEmpty
+            BatchedQueue.snoc
+            BatchedQueue.head
+            BatchedQueue.tail
+            BatchedQueue.toList
+            BatchedQueue.toArray
+
     let raactions =
         [|
+            10  , IsEmpty
             10  , Cons
             10  , Uncons
             20  , Lookup
@@ -60,6 +74,7 @@ let main argv =
 
     let qactions =
         [|
+            10  , IsEmpty
             10  , Snoc
             20  , Head
             10  , Tail
@@ -83,6 +98,7 @@ let main argv =
     for initialSize in initialSizes do
         ignore <| ralist    "SkewBinaryRandomAccessList"    initialSize sbral
         ignore <| ralist    "BinaryRandomAccessList"        initialSize bral
-        ignore <| queue     "BootstrappedQueue"             initialSize bq
+        ignore <| queue     "BootstrappedQueue"             initialSize bq1
+        ignore <| queue     "BatchedQueue"                  initialSize bq2
 
     0

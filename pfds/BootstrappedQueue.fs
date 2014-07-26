@@ -16,8 +16,6 @@ open System.Diagnostics
 
 module BootstrappedQueue =
 
-    // TODO: Represent small queues as tuples
-
     type Queue<'T> =
         | Empty
         | Short of int*'T*'T*'T*'T
@@ -25,63 +23,74 @@ module BootstrappedQueue =
 
     module Details =
 
+        let shortMaxLength = 4                        
+
         let isEmptyImpl (q : Queue<'T>) =
             match q with
             | Empty -> true
             | _     -> false
 
-        let rec checkInnerInvariant<'T> (t : 'T list*int*Queue<Lazy<'T list>>*'T list) : Queue<'T> =
+        let rec createShort (f : 'T list , lenm : int, m : Queue<Lazy<'T list>>, r : 'T list) : Queue<'T> =
+            let tot = f.Length + lenm + r.Length
+            let mutable i  = 0
+            let mutable v0 = Unchecked.defaultof<'T>
+            let mutable v1 = Unchecked.defaultof<'T>
+            let mutable v2 = Unchecked.defaultof<'T>
+            let mutable v3 = Unchecked.defaultof<'T>
+
+            let mutable l = f
+
+            let vs = 
+                seq {
+                    for v in f do
+                        yield v
+
+                    let q = ref m
+                    while not (isEmptyImpl !q) do
+                        let h = !q |> headImpl
+                        q := !q |> tailImpl
+                        let vs = h.Value
+                        for v in vs do
+                            yield v
+
+                    for v in (r |> List.rev) do
+                        yield v
+                }
+
+            for v in vs do
+                match i with
+                | 0 -> v0 <- v
+                | 1 -> v1 <- v
+                | 2 -> v2 <- v
+                | 3 -> v3 <- v
+                | _ -> raise <| OutOfBoundsException i
+                i <- i + 1
+
+            Short (tot,v0,v1,v2,v3)
+
+        and checkInnerInvariant<'T> (t : 'T list*int*Queue<Lazy<'T list>>*'T list) : Queue<'T> =
             match t with
             | ([], _, Empty, _) -> Empty
             | ([], lenm, m, r)  ->
-                let tot = lenm + r.Length
-                if tot > 4 then
+                if lenm + r.Length > shortMaxLength then
                     let h = (m |> headImpl).Value
                     let d = lenm - h.Length
                     let m = m |> tailImpl
                     Long (h, d, m, r)
                 else
-                    let mutable i  = 0
-                    let mutable v0 = Unchecked.defaultof<'T>
-                    let mutable v1 = Unchecked.defaultof<'T>
-                    let mutable v2 = Unchecked.defaultof<'T>
-                    let mutable v3 = Unchecked.defaultof<'T>
-
-                    let mutable q = m
-                    while not (isEmptyImpl q) do
-                        let h = q |> headImpl
-                        q <- q |> tailImpl
-                        let vs = h.Value
-                        for v in vs do
-                            match i with
-                            | 0 -> v0 <- v
-                            | 1 -> v1 <- v
-                            | 2 -> v2 <- v
-                            | 3 -> v3 <- v
-                            | _ -> raise <| OutOfBoundsException i
-                            i <- i + 1
-
-                    for v in (r |> List.rev) do
-                            match i with
-                            | 0 -> v0 <- v
-                            | 1 -> v1 <- v
-                            | 2 -> v2 <- v
-                            | 3 -> v3 <- v
-                            | _ -> raise <| OutOfBoundsException i
-                            i <- i + 1
-
-                    Short (tot,v0,v1,v2,v3)
-
+                    createShort ([], lenm, m, r)
             | _ -> Long t
 
         and checkInvariant<'T> (f : 'T list , lenm : int, m : Queue<Lazy<'T list>>, r : 'T list) : Queue<'T> =
-            // TODO: Remove unnecessary obj creation
             if r.Length <= f.Length + lenm then
                 checkInnerInvariant (f, lenm, m, r)
-            else
+            elif f.Length + lenm + r.Length > shortMaxLength then
                 let lenm    = (lenm + r.Length)
                 let m       = snocImpl (lazy List.rev r, m)
                 checkInnerInvariant (f, lenm, m, [])
+            else
+                createShort (f, lenm, m, r)
+                
 
         and snocImpl<'T> (v : 'T, q : Queue<'T>) : Queue<'T> =
             match q with
@@ -91,6 +100,7 @@ module BootstrappedQueue =
             | Short (3,v0,v1,v2,_)  -> Short (4, v0, v1, v2, v)
             | Short (4,v0,v1,v2,v3) -> Long ([v0;v1;v2;v3;v], 0, Empty, [])
             | Long (f, lenm, m, r)  -> checkInvariant (f, lenm, m, v::r)
+            | _                     -> raise <| InvariantBrokenException q
 
         and headImpl<'T> (q : Queue<'T>) : 'T =
             match q with
@@ -134,7 +144,6 @@ module BootstrappedQueue =
     open Details
 
     let empty = Empty
-
     let inline isEmpty q= isEmptyImpl q
     let inline snoc v q = snocImpl (v, q)
     let inline head q   = headImpl q

@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
+    <Compile Include="Stream.fs" />
+    <Compile Include="BatchedQueue.fs" />
     <Compile Include="SkewBinaryRandomAccessList.fs" />
     <Compile Include="BinaryRandomAccessList.fs" />
     <Compile Include="BootstrappedQueue.fs" />

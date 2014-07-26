@@ -31,6 +31,7 @@ module BinaryRandomAccessList =
         let rec unconsImpl<'T> (ral : RAList<'T>) : 'T*RAList<'T> =
             match ral with
             | Nil                   -> raise EmptyException
+            | One (vv, Nil)         -> vv, Nil
             | One (vv, tt)          -> vv, Zero tt
             | Zero tt               ->
                 let (l,r),t = unconsImpl tt
@@ -69,11 +70,15 @@ module BinaryRandomAccessList =
 
     open Details
 
-    let empty                   = Nil
-    let inline cons v ral       = consImpl (v, ral)
-    let inline uncons ral       = unconsImpl ral
-    let inline lookup i ral     = lookupImpl (i, i, ral)
-    let inline update i v ral   = updateImpl (i, i, (fun _ -> v), ral)
+    let empty                       = Nil
+    let isEmpty (ral : RAList<'T>)  = 
+        match ral with
+        | Nil   -> true
+        | _     -> false
+    let inline cons v ral           = consImpl (v, ral)
+    let inline uncons ral           = unconsImpl ral
+    let inline lookup i ral         = lookupImpl (i, i, ral)
+    let inline update i v ral       = updateImpl (i, i, (fun _ -> v), ral)
 
     let fromSeq (s : seq<'T>) : RAList<'T>   =
         let mutable ral = empty

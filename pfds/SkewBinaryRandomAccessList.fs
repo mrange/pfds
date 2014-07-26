@@ -70,6 +70,8 @@ module SkewBinaryRandomAccessList =
 
     let empty : RAList<'T> = []
 
+    let isEmpty (ral : RAList<'T>) = ral.Length = 0
+
     let cons (v : 'T) (ral : RAList<'T>) : RAList<'T> =
         match ral with
         | (i1, t1)::(i2, t2)::ws when i1 = i2    ->
