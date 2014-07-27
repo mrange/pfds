@@ -12,6 +12,8 @@
 
 namespace pfds
 
+open System.Linq
+
 module BatchedQueue =
 
     // Invariant: Non-empty queues front queue is non-empty
@@ -44,6 +46,8 @@ module BatchedQueue =
 
     let fromSeq (s : seq<'T>) : Queue<'T>   = s |> Seq.toList,[]
 
-    let toList ((fs, rs) : Queue<'T>)       = List.append fs (rs |> List.rev)
+    let toSeq ((fs, rs) : Queue<'T>)        = Seq.append fs <| rs.Reverse ()
 
-    let toArray (q : Queue<'T>)             = q |> toList |> List.toArray
+    let toList (q : Queue<'T>)              = q |> toSeq |> Seq.toList
+
+    let toArray (q : Queue<'T>)             = q |> toSeq |> Seq.toArray

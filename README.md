@@ -1,2 +1,4 @@
-pfds
-====
+pfds - Purely Functional Data Structures
+========================================
+
+

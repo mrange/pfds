@@ -17,8 +17,7 @@ open pfds.test
 
 open Comparer
 
-[<EntryPoint>]
-let main argv =
+let runAllTests () =
 
     let bral =
         CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.NewRAList
@@ -113,3 +112,12 @@ let main argv =
         ignore <| queue     "StreamedQueue"                 initialSize sq
 
     0
+
+[<EntryPoint>]
+let main argv =
+    try
+        runAllTests ()
+    with 
+        | exn -> 
+            printfn "Exception caught: %A" exn
+            999

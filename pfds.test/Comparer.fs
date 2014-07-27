@@ -180,7 +180,7 @@ module Comparer =
             ignore <| inc rrun
 
             // Used when debugging failures
-            if run > Int32.MaxValue && Debugger.IsAttached then
+            if run >= Int32.MaxValue && Debugger.IsAttached then
                 let a1 = ab1.ToArray !mc1
                 let a2 = ab2.ToArray !mc2
                 info <| sprintf "a1 = %A" a1
