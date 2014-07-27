@@ -45,7 +45,7 @@ module StreamedQueue =
         let fl,f,rl,r = q
         match f with
         | Stream.Nil            -> raise EmptyException
-        | Stream.Cons (_,ss)    -> 
+        | Stream.Cons (_,ss)    ->
             Details.check (fl - 1,ss,rl,r)
 
     let fromSeq (s : seq<'T>) : Queue<'T> =

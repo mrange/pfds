@@ -117,7 +117,7 @@ let runAllTests () =
 let main argv =
     try
         runAllTests ()
-    with 
-        | exn -> 
+    with
+        | exn ->
             printfn "Exception caught: %A" exn
             999

@@ -22,13 +22,13 @@ module Stream =
     [<GeneralizableValue>]
     let inline empty<'T> : Stream<'T> = SimplisticLazy.create <| fun () -> StreamNil
 
-    let inline (|Nil|Cons|) (s : Stream<'T>) = 
+    let inline (|Nil|Cons|) (s : Stream<'T>) =
         let sc = s.Value
         match sc with
         | StreamCons (vv,ss)    -> Cons (vv,ss)
         | StreamNil             -> Nil
 
-    let isEmpty (s : Stream<'T>) : bool = 
+    let isEmpty (s : Stream<'T>) : bool =
         match s.Value with
         | StreamNil -> true
         | _         -> false
@@ -42,20 +42,20 @@ module Stream =
         | StreamCons (v,_)  -> v
 
     let drop1 (s : Stream<'T>) : Stream<'T> =
-        SimplisticLazy.create <| fun () -> 
+        SimplisticLazy.create <| fun () ->
             match s.Value with
             | StreamNil         -> StreamNil
             | StreamCons (_,ss) -> ss.Value
 
     module Details =
         let rec takeImpl (n : int, s : Stream<'T>) : Stream<'T> =
-            SimplisticLazy.create <| fun () -> 
+            SimplisticLazy.create <| fun () ->
                 match s.Value with
                 | StreamNil             -> StreamNil
                 | StreamCons (vv,ss)    -> StreamCons (vv, takeImpl (n - 1, ss))
 
         let rec dropImpl (n : int, s : Stream<'T>) : Stream<'T> =
-            SimplisticLazy.create <| fun () -> 
+            SimplisticLazy.create <| fun () ->
                 if n = 0 then StreamNil
                 else
                     match s.Value with
@@ -63,13 +63,13 @@ module Stream =
                     | StreamCons (_,ss)     -> (dropImpl (n - 1, s)).Value
 
         let rec appendImpl (l : Stream<'T>, r : Stream<'T>) : Stream<'T> =
-            SimplisticLazy.create <| fun () -> 
+            SimplisticLazy.create <| fun () ->
                 match l.Value with
                 | StreamNil             -> r.Value
                 | StreamCons (vv,ss)    -> StreamCons (vv, appendImpl (ss, r))
 
         let rec reverseImpl (r : Stream<'T>, s : Stream<'T>) : Stream<'T> =
-            SimplisticLazy.create <| fun () -> 
+            SimplisticLazy.create <| fun () ->
                 match s.Value with
                 | StreamNil             -> r.Value
                 | StreamCons (vv, ss)   -> (reverseImpl (cons vv r, ss)).Value
@@ -87,14 +87,14 @@ module Stream =
             q <- cons v q
         reverse q
 
-(*  
-    A lazy implemention of fromSeq which unfortunately fails because 
-    it can't guarantee disposing the enumerator unless iterating to the end 
+(*
+    A lazy implemention of fromSeq which unfortunately fails because
+    it can't guarantee disposing the enumerator unless iterating to the end
     (Stream has no dipose concept)
     let fromSeq (s : seq<'T>) : Stream<'T> =
-        let s = SimplisticLazy.create <| fun () -> 
+        let s = SimplisticLazy.create <| fun () ->
             let e = s.GetEnumerator ()
-            let rec f () = 
+            let rec f () =
                 if e.MoveNext () then
                     StreamCons (e.Current, SimplisticLazy.create f)
                 else
@@ -102,7 +102,7 @@ module Stream =
                     StreamNil
             f ()
         s
-*)             
+*)
 
     let toSeq (s : Stream<'T>) : seq<'T> =
         let s = ref s

@@ -27,50 +27,50 @@ exception OutOfBoundsException      of int
 exception InvariantBrokenException  of obj
 
 /// Lazy in F# relies on Lazy<> initialized with LazyThreadSafetyMode.ExecutionAndPublication.
-/// LazyThreadSafetyMode.ExecutionAndPublication implies long-running locks. This is the safe 
+/// LazyThreadSafetyMode.ExecutionAndPublication implies long-running locks. This is the safe
 /// option in the presence of side-effects. However, in a functional setting with no side-effects
 /// it can be more efficient to allow multiple and unnecessary initalizations as this doesn't require
 /// long-running locks
 type SimplisticLazy<'T>() =
 
-    [<VolatileField>] 
+    [<VolatileField>]
     let mutable creator = Unchecked.defaultof<_>
 
     let mutable value   = Unchecked.defaultof<'T>
 
-    new (creator : unit -> 'T) as x = 
+    new (creator : unit -> 'T) as x =
         SimplisticLazy<'T> ()
         then
             x.Creator <- creator
 
-    new (v : 'T) as x = 
+    new (v : 'T) as x =
         SimplisticLazy<'T> ()
         then
             x.Value <- v
 
-    member x.Value 
+    member x.Value
         with get () =
             if not <| obj.ReferenceEquals (creator, Unchecked.defaultof<_>) then
                 value   <- creator ()
                 // This assumes intel CPU
                 // Intel CPUs relies on MOV for non-atomic and atomic reads.
                 // However there is a difference between non-atomic and atomic writes
-                // By setting a memory barrier before we set the creator (guardian) we 
-                // make sure the writes of value bytes isn't reordered and should be 
+                // By setting a memory barrier before we set the creator (guardian) we
+                // make sure the writes of value bytes isn't reordered and should be
                 // consistent when setting the creator (guardian) flag
                 Thread.MemoryBarrier ()
                 creator <- Unchecked.defaultof<_>
 
             value
-        and private set v = 
+        and private set v =
             value <- v
 
-    member private x.Creator 
-        with get () = creator 
-        and  set  v = creator <- v 
+    member private x.Creator
+        with get () = creator
+        and  set  v = creator <- v
 
-module SimplisticLazy = 
-    
+module SimplisticLazy =
+
     let inline create (creator : unit -> 'T) : SimplisticLazy<'T> = SimplisticLazy<'T>(creator)
 
     let inline createFromValue (v : 'T) : SimplisticLazy<'T> = SimplisticLazy<'T>(v)
