@@ -80,12 +80,29 @@ module Stream =
     let inline reverse s    = Details.reverseImpl (empty, s)
     let inline ( ++ ) l r   = append l r
 
-    // TODO: Implement as lazy?
+
     let fromSeq (s : seq<'T>) : Stream<'T> =
         let mutable q = empty
         for v in s do
             q <- cons v q
         reverse q
+
+(*  
+    A lazy implemention of fromSeq which unfortunately fails because 
+    it can't guarantee disposing the enumerator unless iterating to the end 
+    (Stream has no dipose concept)
+    let fromSeq (s : seq<'T>) : Stream<'T> =
+        let s = SimplisticLazy.create <| fun () -> 
+            let e = s.GetEnumerator ()
+            let rec f () = 
+                if e.MoveNext () then
+                    StreamCons (e.Current, SimplisticLazy.create f)
+                else
+                    e.Dispose ()
+                    StreamNil
+            f ()
+        s
+*)             
 
     let toSeq (s : Stream<'T>) : seq<'T> =
         let s = ref s
