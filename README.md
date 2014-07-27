@@ -13,6 +13,7 @@ For example; no data structures in pfds can beat a simple queue implemented as a
 If immutability is important adding immutability to the simple queue trivially by forcing a full copy whenever pop/pushing to the queue can prove too expensive.
 
 pfds provides several immutable implementations of queues each with their own set of pros/cons:
+
 1. BatchedQueue - A simple immutable Queue where cost of head op is O(1) and tail/snoc is O(1) amortized. The cost is that tail/snoc is O(n) worst-case
 2. StreamedQueue - Immutable Queue where the cost tail/snoc is mitigated by using lazy evaluation. The cost is a more complex data structure with lower defacto performance for head and increased memory footprint.
 3. BootstrappedQueue - Immmutable Queue where head/tail/snoc all run in O(1) (effectively). The cost is more complex code and dats structure.
