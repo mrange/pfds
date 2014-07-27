@@ -17,10 +17,10 @@ module Stream =
     type StreamCell<'T> =
         | StreamNil
         | StreamCons    of 'T*Stream<'T>
-    and Stream<'T>      = Lazy<StreamCell<'T>>
+    and Stream<'T>      = SimplisticLazy<StreamCell<'T>>
 
     [<GeneralizableValue>]
-    let inline empty<'T> : Stream<'T> = lazy StreamNil
+    let inline empty<'T> : Stream<'T> = SimplisticLazy.create <| fun () -> StreamNil
 
     let inline (|Nil|Cons|) (s : Stream<'T>) = 
         let sc = s.Value
@@ -34,7 +34,7 @@ module Stream =
         | _         -> false
 
     let cons v (s : Stream<'T>) : Stream<'T> =
-        lazy (StreamCons (v,s))
+        SimplisticLazy.create <| fun () -> StreamCons (v,s)
 
     let head (s : Stream<'T>) : 'T =
         match s.Value with
@@ -42,20 +42,20 @@ module Stream =
         | StreamCons (v,_)  -> v
 
     let drop1 (s : Stream<'T>) : Stream<'T> =
-        lazy
+        SimplisticLazy.create <| fun () -> 
             match s.Value with
             | StreamNil         -> StreamNil
             | StreamCons (_,ss) -> ss.Value
 
     module Details =
         let rec takeImpl (n : int, s : Stream<'T>) : Stream<'T> =
-            lazy
+            SimplisticLazy.create <| fun () -> 
                 match s.Value with
                 | StreamNil             -> StreamNil
                 | StreamCons (vv,ss)    -> StreamCons (vv, takeImpl (n - 1, ss))
 
         let rec dropImpl (n : int, s : Stream<'T>) : Stream<'T> =
-            lazy
+            SimplisticLazy.create <| fun () -> 
                 if n = 0 then StreamNil
                 else
                     match s.Value with
@@ -63,13 +63,13 @@ module Stream =
                     | StreamCons (_,ss)     -> (dropImpl (n - 1, s)).Value
 
         let rec appendImpl (l : Stream<'T>, r : Stream<'T>) : Stream<'T> =
-            lazy
+            SimplisticLazy.create <| fun () -> 
                 match l.Value with
                 | StreamNil             -> r.Value
                 | StreamCons (vv,ss)    -> StreamCons (vv, appendImpl (ss, r))
 
-        let rec reverseImpl (r : Stream<'T>, s : Stream<'T>) : Lazy<StreamCell<'T>> =
-            lazy
+        let rec reverseImpl (r : Stream<'T>, s : Stream<'T>) : Stream<'T> =
+            SimplisticLazy.create <| fun () -> 
                 match s.Value with
                 | StreamNil             -> r.Value
                 | StreamCons (vv, ss)   -> (reverseImpl (cons vv r, ss)).Value
