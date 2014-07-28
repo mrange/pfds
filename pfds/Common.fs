@@ -50,8 +50,9 @@ type SimplisticLazy<'T>() =
 
     member x.Value
         with get () =
-            if not <| obj.ReferenceEquals (creator, Unchecked.defaultof<_>) then
-                value   <- creator ()
+            let c = creator
+            if not <| obj.ReferenceEquals (c, Unchecked.defaultof<_>) then
+                value   <- c ()
                 // This assumes intel CPU
                 // Intel CPUs relies on MOV for non-atomic and atomic reads.
                 // However there is a difference between non-atomic and atomic writes

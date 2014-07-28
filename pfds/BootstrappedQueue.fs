@@ -19,7 +19,7 @@ module BootstrappedQueue =
     type Queue<'T> =
         | Empty
         | Short of int*'T*'T*'T*'T
-        | Long  of 'T list*int*Queue<Lazy<'T list>>*'T list
+        | Long  of 'T list*int*Queue<SimplisticLazy<'T list>>*'T list
 
     module Details =
 
@@ -30,7 +30,7 @@ module BootstrappedQueue =
             | Empty -> true
             | _     -> false
 
-        let rec createShort (f : 'T list , lenm : int, m : Queue<Lazy<'T list>>, r : 'T list) : Queue<'T> =
+        let rec createShort (f : 'T list , lenm : int, m : Queue<SimplisticLazy<'T list>>, r : 'T list) : Queue<'T> =
             let tot = f.Length + lenm + r.Length
             let mutable i  = 0
             let mutable v0 = Unchecked.defaultof<'T>
@@ -68,7 +68,7 @@ module BootstrappedQueue =
 
             Short (tot,v0,v1,v2,v3)
 
-        and checkInnerInvariant<'T> (t : 'T list*int*Queue<Lazy<'T list>>*'T list) : Queue<'T> =
+        and checkInnerInvariant<'T> (t : 'T list*int*Queue<SimplisticLazy<'T list>>*'T list) : Queue<'T> =
             match t with
             | ([], _, Empty, _) -> Empty
             | ([], lenm, m, r)  ->
@@ -81,12 +81,12 @@ module BootstrappedQueue =
                     createShort ([], lenm, m, r)
             | _ -> Long t
 
-        and checkInvariant<'T> (f : 'T list , lenm : int, m : Queue<Lazy<'T list>>, r : 'T list) : Queue<'T> =
+        and checkInvariant<'T> (f : 'T list , lenm : int, m : Queue<SimplisticLazy<'T list>>, r : 'T list) : Queue<'T> =
             if r.Length <= f.Length + lenm then
                 checkInnerInvariant (f, lenm, m, r)
             elif f.Length + lenm + r.Length > shortMaxLength then
                 let lenm    = (lenm + r.Length)
-                let m       = snocImpl (lazy List.rev r, m)
+                let m       = snocImpl (SimplisticLazy.create (fun () -> List.rev r), m)
                 checkInnerInvariant (f, lenm, m, [])
             else
                 createShort (f, lenm, m, r)
@@ -132,7 +132,7 @@ module BootstrappedQueue =
                 if i > 3 then
                     push v3
             | Long (f, lenm, m, r)      ->
-                let p (lv : Lazy<'T list>) =
+                let p (lv : SimplisticLazy<'T list>) =
                     let v = lv.Value
                     v |> List.iter push
 
