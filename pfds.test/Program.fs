@@ -25,7 +25,7 @@ let runStreamTests () =
 
     highlight "Testing Stream"
 
-    let te s e a = ignore <| testEqual "Stream" s e a 
+    let te s e a = ignore <| testEqual "Stream" s e a
 
     let e_range   = (Enumerable.Range (0, count)).ToArray ()
     let a_range   = Stream.range  0 count |> Stream.toArray

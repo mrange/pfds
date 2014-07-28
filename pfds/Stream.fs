@@ -83,8 +83,8 @@ module Stream =
     let repeat (v : 'T) (n : int) : Stream<'T> =
         let i = ref 0
 
-        let rec f () = 
-            if !i < n then 
+        let rec f () =
+            if !i < n then
                 i := !i + 1
                 StreamCons (v, SimplisticLazy.create f)
             else StreamNil
@@ -94,8 +94,8 @@ module Stream =
     let range (inclusiveFrom : int) (exclusiveTo : int) : Stream<int> =
         let i = ref inclusiveFrom
 
-        let rec f () = 
-            if !i < exclusiveTo then 
+        let rec f () =
+            if !i < exclusiveTo then
                 i := !i + 1
                 StreamCons (!i - 1, SimplisticLazy.create f)
             else StreamNil

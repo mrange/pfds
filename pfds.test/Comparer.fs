@@ -259,7 +259,7 @@ module Comparer =
 
         if a1 <> a2 then
             error <| "After test run the resulting collections are not equal"
-        
+
         let errors = !totalErrors - errorsUntilNow
 
         if errors = 0 then
