@@ -111,7 +111,7 @@ module Comparer =
 
         let random          = Random(19740531)
 
-        let errors          = ref 0
+        let errorsUntilNow  = !totalErrors
         let last            = ref 0
 
         let length          = ref initialSize
@@ -126,16 +126,6 @@ module Comparer =
                     for i in 1..f do yield a
             |]
 
-        let inc i           =
-            i := !i + 1
-            !i
-
-        let dec i           =
-            if !i = 0 then 0
-            else
-                i := !i - 1
-                !i
-
         let getIdx l        =
             let i   = random.Next(0, l)
             // 1.05 causes some reads to go out of bounds, we want to test this too.
@@ -146,26 +136,6 @@ module Comparer =
         let initial         = [| for i in 1..initialSize -> getNext () |] :> seq<int>
         let mc1             = ref (initial |> ab1.Initial)
         let mc2             = ref (initial |> ab2.Initial)
-
-        let write c (prelude : string) (msg : string) =
-            let p = Console.ForegroundColor
-            Console.ForegroundColor <- c
-            try
-                Console.Write prelude
-                Console.Write(String (' ', 10 - prelude.Length))
-                Console.WriteLine(msg)
-            finally
-                Console.ForegroundColor <- p
-
-        let info        (msg : string)  = write ConsoleColor.Gray "INFO" msg
-
-        let highlight   (msg : string)  = write ConsoleColor.White "HIGHLIGHT" msg
-
-        let success     (msg : string)  = write ConsoleColor.Green "SUCCESS" msg
-
-        let error       (msg : string)  =
-            ignore <| inc errors
-            write ConsoleColor.Red "ERROR" msg
 
         let runAction (a : unit -> 'T*'C) : CollectionActionResult<'T,'C> =
             try
@@ -180,7 +150,7 @@ module Comparer =
             ignore <| inc rrun
 
             // Used when debugging failures
-            if run >= 0 && Debugger.IsAttached then
+            if run >= Int32.MaxValue && Debugger.IsAttached then
                 let a1 = ab1.ToArray !mc1
                 let a2 = ab2.ToArray !mc2
                 info <| sprintf "a1 = %A" a1
@@ -289,13 +259,15 @@ module Comparer =
 
         if a1 <> a2 then
             error <| "After test run the resulting collections are not equal"
+        
+        let errors = !totalErrors - errorsUntilNow
 
-        if !errors = 0 then
+        if errors = 0 then
             success "Test run done, no errors detected"
         else
-            error <| sprintf "Test run done, %d errors detected" !errors
+            error <| sprintf "Test run done, %d errors detected" errors
 
-        !errors = 0
+        errors = 0
 
     let compareToReferenceRAList
         (initialSize: int                       )

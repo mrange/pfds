@@ -11,13 +11,34 @@
 // ----------------------------------------------------------------------------------------------
 
 open System
+open System.Linq
 
 open pfds
 open pfds.test
 
 open Comparer
 
-let runAllTests () =
+/// Some Stream doesn't fit into the collection concept and needs their own tests
+let runStreamTests () =
+
+    let count = 10
+
+    highlight "Testing Stream"
+
+    let te s e a = ignore <| testEqual "Stream" s e a 
+
+    let e_range   = (Enumerable.Range (0, count)).ToArray ()
+    let a_range   = Stream.range  0 count |> Stream.toArray
+    te "range" e_range a_range
+
+    let e_repeat  = (Enumerable.Repeat (1, count)).ToArray ()
+    let a_repeat  = Stream.repeat 1 count |> Stream.toArray
+    te "repeat" e_repeat a_repeat
+
+
+let runCollectionTests () =
+
+    highlight "Testing collections"
 
     let bral =
         CollectionAbstraction<BinaryRandomAccessList.RAList<int>>.NewRAList
@@ -111,12 +132,17 @@ let runAllTests () =
         ignore <| queue     "BatchedQueue"                  initialSize bq2
         ignore <| queue     "StreamedQueue"                 initialSize sq
 
-    0
-
 [<EntryPoint>]
 let main argv =
     try
-        runAllTests ()
+        runStreamTests ()
+        runCollectionTests ()
+        if !totalErrors = 0 then
+            success "No errors detected"
+            0
+        else
+            error <| sprintf "%d errors detected" !totalErrors
+            101
     with
         | exn ->
             printfn "Exception caught: %A" exn

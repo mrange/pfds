@@ -47,6 +47,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
     <Compile Include="ReferenceImplementation.fs" />
     <Compile Include="Comparer.fs" />
     <Compile Include="Program.fs" />

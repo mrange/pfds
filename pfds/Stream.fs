@@ -80,6 +80,27 @@ module Stream =
     let inline reverse s    = Details.reverseImpl (empty, s)
     let inline ( ++ ) l r   = append l r
 
+    let repeat (v : 'T) (n : int) : Stream<'T> =
+        let i = ref 0
+
+        let rec f () = 
+            if !i < n then 
+                i := !i + 1
+                StreamCons (v, SimplisticLazy.create f)
+            else StreamNil
+
+        SimplisticLazy.create f
+
+    let range (inclusiveFrom : int) (exclusiveTo : int) : Stream<int> =
+        let i = ref inclusiveFrom
+
+        let rec f () = 
+            if !i < exclusiveTo then 
+                i := !i + 1
+                StreamCons (!i - 1, SimplisticLazy.create f)
+            else StreamNil
+
+        SimplisticLazy.create f
 
     let fromSeq (s : seq<'T>) : Stream<'T> =
         let mutable q = empty
@@ -103,6 +124,7 @@ module Stream =
             f ()
         s
 *)
+
 
     let toSeq (s : Stream<'T>) : seq<'T> =
         let s = ref s
