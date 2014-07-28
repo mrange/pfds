@@ -18,7 +18,7 @@ open pfds.test
 
 open Comparer
 
-/// Some Stream doesn't fit into the collection concept and needs their own tests
+/// Some Stream operations doesn't fit into the collection concept and needs their own tests
 let runStreamTests () =
 
     let count = 10

@@ -41,6 +41,9 @@ module Stream =
         | StreamNil         -> raise EmptyException
         | StreamCons (v,_)  -> v
 
+    /// drop1 is almost like tail except it doesn't throw when "tailing" an empty Stream
+    /// The reason for this is that it would require forcing the value too early
+    /// When drop1 on empty Stream when forcing the value it will return an empty Stream
     let drop1 (s : Stream<'T>) : Stream<'T> =
         SimplisticLazy.create <| fun () ->
             match s.Value with
@@ -101,7 +104,8 @@ module Stream =
             else StreamNil
 
         SimplisticLazy.create f
-
+    // TOOD: Can this be rewritten as many appended streams where each substream is reversed
+    //  In order to avoid a full reverse when forcing the first value
     let fromSeq (s : seq<'T>) : Stream<'T> =
         let mutable q = empty
         for v in s do
@@ -112,6 +116,7 @@ module Stream =
     A lazy implemention of fromSeq which unfortunately fails because
     it can't guarantee disposing the enumerator unless iterating to the end
     (Stream has no dipose concept)
+    Implementation kept as a template for lazy streaming
     let fromSeq (s : seq<'T>) : Stream<'T> =
         let s = SimplisticLazy.create <| fun () ->
             let e = s.GetEnumerator ()
