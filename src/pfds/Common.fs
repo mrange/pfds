@@ -1,4 +1,4 @@
-﻿module Common
+﻿module pfds.Common
 
 open System
 open System.Threading

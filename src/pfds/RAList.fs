@@ -7,7 +7,7 @@ type Tree<'T> =
 
 type Type<'T> = (int * Tree<'T>) list
 
-[<GeneralizableValueAttribute>]
+[<GeneralizableValue>]
 let empty : Type<'T> = []
 
 let isEmpty (l : Type<'T>) : bool =
@@ -57,6 +57,7 @@ let toSeq (l : Type<'T>) : seq<'T> =
   }
 
 open System.Collections.Generic
+open System.Linq
 
 let fromSeq (s : seq<'T>) : Type<'T> =
   let rec loop (e : IEnumerator<'T>) l =
@@ -64,6 +65,6 @@ let fromSeq (s : seq<'T>) : Type<'T> =
       loop e (cons e.Current l)
     else
       l
-  use e = (s |> Seq.rev).GetEnumerator ()
+  let rs = s.Reverse ()
+  use e = rs.GetEnumerator ()
   loop e empty
-    

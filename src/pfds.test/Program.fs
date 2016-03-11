@@ -1,4 +1,22 @@
-﻿module TestQueue =
+﻿module TestRAList =
+  open System.Collections.Generic
+
+  open pfds
+
+  open FsCheck
+
+  type Properties() =
+    static member ``input |> fromSeq |> toSeq = input`` (input : int []) =
+      let expected  = input
+      let actual    = input |> RAList.fromSeq |> RAList.toSeq |> Seq.toArray
+      expected = actual
+
+  let test () =
+    let config = { Config.Quick with MaxTest = 1000 }
+    
+    Check.All<Properties> config
+
+module TestQueue =
   open System.Collections.Generic
 
   open pfds
@@ -44,30 +62,10 @@
     
     Check.All<Properties> config
 
-module TestRAList =
-  open System.Collections.Generic
-
-  open pfds
-
-  open FsCheck
-
-  type Properties() =
-    static member ``input |> fromSeq |> toSeq = input`` (input : int []) =
-      let expected  = input
-      let actual    = input |> RAList.fromSeq |> RAList.toSeq |> Seq.toArray
-      expected = actual
-
-  let test () =
-    let gg = [|0|] |> RAList.fromSeq
-    ignore <| Properties.``input |> fromSeq |> toSeq = input`` [|0|]
-    let config = { Config.Quick with MaxTest = 1000 }
-    
-    Check.All<Properties> config
-
 [<EntryPoint>]
 let main argv = 
   try
-//    TestQueue.test ()
+    TestQueue.test ()
     TestRAList.test ()
     0
   with
