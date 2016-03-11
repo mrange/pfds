@@ -37,10 +37,10 @@ let rec cons (v : 'T) (l : Type<'T>) : Type<'T> =
 let rec lookup (i : int) (l : Type<'T>) : 'T =
   let rec treeLookup (hts : int) i (t : Tree<'T>) =
     match i, t with
-    | 0, Leaf v1                        -> v1
-    | 0, Node (v1, _, _)                -> v1
-    | _, Node (_ , lt, _) when i < hts  -> treeLookup (hts / 2) (i - 1) lt
-    | _, Node (_ , _, rt)               -> treeLookup (hts / 2) (i - 1 - hts) rt
+    | 0, Leaf v1                            -> v1
+    | 0, Node (v1, _, _)                    -> v1
+    | _, Node (_ , lt, _) when i - 1 < hts  -> treeLookup (hts / 2) (i - 1) lt
+    | _, Node (_ , _, rt)                   -> treeLookup (hts / 2) (i - 1 - hts) rt
     | _ -> failwith "lookup called on an invalid Queue<'T>"
   match l with
   | []                        -> failwith "lookup index out bounds"

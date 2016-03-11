@@ -48,7 +48,6 @@
     <Compile Include="Common.fs" />
     <Compile Include="Queue.fs" />
     <Compile Include="RAList.fs" />
-    <Compile Include="GG.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
