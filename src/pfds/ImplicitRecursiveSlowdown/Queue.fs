@@ -31,12 +31,12 @@ let rec snoc<'T> (q : Type<'T>) (v : 'T) : Type<'T> =
 
 let rec headAndTail<'T> (q : Type<'T>) : 'T*Type<'T> =
   match q with
-  | Shallow Zero                    -> failwith "headAndTail on empty Queue<'T>"
+  | Shallow Zero                    -> failwith "headAndTail on empty Queue"
   | Shallow (One v1)                -> v1, empty
   | Shallow (Two (v1, v2))          -> v1, Shallow (One v2)
   | Deep (Zero, Run rq, td)         ->
     match rq, td with
-    | Shallow Zero, Zero            -> failwith "headAndTail called on an invalid Queue<'T>"
+    | Shallow Zero, Zero            -> failwith "headAndTail on invalid Queue"
     | Shallow Zero, One v1          -> v1, empty
     | Shallow Zero, Two (v1, v2)    -> v1, Shallow (One v2)
     | _ -> 

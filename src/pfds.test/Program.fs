@@ -1,9 +1,5 @@
 ﻿open System
-open System.Collections.Generic
 open FsCheck
-open pfds.ImplicitRecursiveSlowdown
-open pfds.SkewBinary
-
 
 #if DEBUG
 let config = { Config.Quick with MaxTest = 10 }
@@ -11,7 +7,36 @@ let config = { Config.Quick with MaxTest = 10 }
 let config = { Config.Quick with MaxTest = 1000 }
 #endif
 
+module Oracles =
+  open System.Collections.Generic
+  open System.Linq
+
+  let ralist<'T> () =
+    let l           = ResizeArray<'T> ()
+    let push v      = l.Add v
+    let isEmpty ()  = l.Count = 0
+    let pop ()      = 
+      let last  = l.Count - 1
+      let v     = l.[last]
+      l.RemoveAt last
+      v
+    let length ()   = l.Count
+    let lookup i    = l.[l.Count - 1 - i]
+    let toArray ()  = (Enumerable.Reverse l).ToArray ()
+    isEmpty, push, pop, length, lookup, toArray
+
+
+  let queue<'T> ()  =
+    let q           = Queue<'T> ()
+    let push v      = q.Enqueue v
+    let isEmpty ()  = q.Count = 0
+    let pop ()      = q.Dequeue ()
+    let toArray ()  = q.ToArray ()
+    isEmpty, push, pop, toArray
+
 module TestRAList =
+  open pfds.SkewBinary
+
   type RAListActions<'T> =
     | Lookup      of float
     | Push        of 'T
@@ -24,54 +49,44 @@ module TestRAList =
     | _ -> v
 
   type Properties() =
-    static member ``Compare RAList's behavior to oracle`` (actions : RAListActions<int> list) =
-      let push (l : ResizeArray<'T>) v  = l.Add v
-      let isEmpty (l : ResizeArray<'T>) = l.Count = 0
-      let pop (l : ResizeArray<'T>)     = 
-        let last  = l.Count - 1
-        let v     = l.[last]
-        l.RemoveAt last
-        v
-      let length (l : ResizeArray<'T>)  = l.Count
-      let lookup (l : ResizeArray<'T>) i= l.[l.Count - 1 - i]
+    static member ``RAList's behavior is equivalent with to oracle's`` (actions : RAListActions<int> list) =
+      let isEmpty, push, pop, length, lookup, toArray = Oracles.ralist ()
 
-      let rec loop (oracle : ResizeArray<'T>) (ral : RAList.Type<'T>) actions =
+      let rec loop (ral : RAList.Type<int>) actions =
         match actions with
         | [] -> true, ral
         | (Push v)::actions ->
-          push oracle v
-          loop oracle (RAList.cons v ral) actions
+          push v
+          loop (RAList.cons v ral) actions
         | Pop::actions ->
-          if oracle |> isEmpty |> not && ral |> RAList.isEmpty |> not then
-            let e     = pop oracle
+          if isEmpty () |> not && ral |> RAList.isEmpty |> not then
+            let e     = pop ()
             let h, t  = RAList.headAndTail ral
-            if e = h then loop oracle t actions
+            if e = h then loop t actions
             else 
               false, ral
-          else if isEmpty oracle && ral |> RAList.isEmpty then
-            loop oracle ral actions
+          else if isEmpty () && ral |> RAList.isEmpty then
+            loop ral actions
           else
             false, ral
         | (Lookup ir)::actions ->
-          let l = length oracle
+          let l = length ()
           if l = 0 then
-            loop oracle ral actions
+            loop ral actions
           elif l = RAList.length ral then
             let ir  = (ir |> coerce |> abs) % 1.0
             let i   = ir * float (l - 1) |> round |> int
-            let e   = lookup oracle i
+            let e   = lookup i
             let a   = RAList.lookup i ral 
-            if e    = a then 
-              loop oracle ral actions
+            if e = a then 
+              loop ral actions
             else 
               false, ral
           else
             false, ral
       
-      let oracle    = ResizeArray<int> ()
-      let r, ral    = loop oracle RAList.empty actions
-      oracle.Reverse ()
-      let expected  = oracle.ToArray ()
+      let r, ral    = loop RAList.empty actions
+      let expected  = toArray ()
       let actual    = ral |> RAList.toSeq |> Seq.toArray
       if r && expected = actual then
         true
@@ -93,35 +108,74 @@ module TestRAList =
     Check.All<Properties> config
 
 module TestQueue =
+  open pfds.ImplicitRecursiveSlowdown
+
   type QueueActions<'T> =
     | Push of 'T
     | Pop
 
   type Properties() =
-    static member ``Compare Queue's behavior to oracle`` (actions : QueueActions<int> list) =
-      let push (q : Queue<'T>) v  = q.Enqueue v
-      let isEmpty (q : Queue<'T>) = q.Count = 0
-      let pop (q : Queue<'T>)     = q.Dequeue ()
-      let rec loop (oracle : Queue<'T>) (q : Queue.Type<'T>) actions =
+    static member ``Queue's behavior is equivalent with to oracle's`` (actions : QueueActions<int> list) =
+      let isEmpty, push, pop, toArray = Oracles.queue<int> ()
+      let rec loop (q : Queue.Type<int>) actions =
         match actions with
         | [] -> true, q
         | (Push v)::actions ->
-          push oracle v
-          loop oracle (Queue.snoc q v) actions
+          push v
+          loop (Queue.snoc q v) actions
         | Pop::actions ->
-          if oracle |> isEmpty |> not && q |> Queue.isEmpty |> not then
-            let e     = pop oracle
+          if isEmpty () |> not && q |> Queue.isEmpty |> not then
+            let e     = pop ()
             let h, t  = Queue.headAndTail q
-            if e = h then loop oracle t actions
+            if e = h then loop t actions
             else false, q
-          else if isEmpty oracle && q |> Queue.isEmpty then
-            loop oracle q actions
+          else if isEmpty () && q |> Queue.isEmpty then
+            loop q actions
           else
             false, q
 
-      let oracle    = Queue<int> ()
-      let r, q      = loop oracle Queue.empty actions
-      let expected  = oracle |> Seq.toArray
+      let r, q      = loop Queue.empty actions
+      let expected  = toArray ()
+      let actual    = q |> Queue.toSeq |> Seq.toArray
+      r && expected = actual
+
+    static member ``input |> fromSeq |> toSeq = input`` (input : int []) =
+      let expected  = input
+      let actual    = input |> Queue.fromSeq |> Queue.toSeq |> Seq.toArray
+      expected = actual
+
+  let test () =
+    Check.All<Properties> config
+
+module TestBSQueue =
+  open pfds.Bootstrapped
+
+  type QueueActions<'T> =
+    | Push of 'T
+    | Pop
+
+  type Properties() =
+    static member ``Queue's behavior is equivalent with to oracle's`` (actions : QueueActions<int> list) =
+      let isEmpty, push, pop, toArray = Oracles.queue<int> ()
+      let rec loop (q : Queue.Type<int>) actions =
+        match actions with
+        | [] -> true, q
+        | (Push v)::actions ->
+          push v
+          loop (Queue.snoc q v) actions
+        | Pop::actions ->
+          if isEmpty () |> not && q |> Queue.isEmpty |> not then
+            let e     = pop ()
+            let h, t  = Queue.headAndTail q
+            if e = h then loop t actions
+            else false, q
+          else if isEmpty () && q |> Queue.isEmpty then
+            loop q actions
+          else
+            false, q
+
+      let r, q      = loop Queue.empty actions
+      let expected  = toArray ()
       let actual    = q |> Queue.toSeq |> Seq.toArray
       r && expected = actual
 
@@ -136,6 +190,7 @@ module TestQueue =
 [<EntryPoint>]
 let main argv = 
   try
+    TestBSQueue.test ()
     TestQueue.test ()
     TestRAList.test ()
     0
