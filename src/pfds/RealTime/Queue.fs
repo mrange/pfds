@@ -13,27 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ----------------------------------------------------------------------------------------------
-namespace pfds.AssemblyInfo
+[<RequireQualifiedAccess>]
+module pfds.RealTime.Queue
 
-open System.Reflection
-open System.Runtime.CompilerServices
-open System.Runtime.InteropServices
+open pfds.Common
 
-[<assembly: AssemblyTitle("pfds")>]
-[<assembly: AssemblyDescription("")>]
-[<assembly: AssemblyConfiguration("")>]
-[<assembly: AssemblyCompany("")>]
-[<assembly: AssemblyProduct("pfds")>]
-[<assembly: AssemblyCopyright("Copyright ©  2016")>]
-[<assembly: AssemblyTrademark("")>]
-[<assembly: AssemblyCulture("")>]
+type Type<'T> = Stream<'T>*'T list*Stream<'T>
 
-[<assembly: ComVisible(false)>]
+// [<GeneralizableValue>]
+let inline empty () = Stream.empty (), [], Stream.empty ()
 
-[<assembly: Guid("5e272cc1-2599-4374-9f4e-6dbf0ab2fe3a")>]
+let inline isEmpty (q : Type<'T>) : bool =
+  match q with
+  | (Stream.Empty, _, _) -> true
+  | _ -> false
 
-[<assembly: AssemblyVersion("1.0.0.0")>]
-[<assembly: AssemblyFileVersion("1.0.0.0")>]
-
-do
-    ()
+let rec internal rotate (q : Type<'T>) =
+  match q with
+  | (Stream.Empty, y::_, a)         -> Stream.cons y a
+  | (Stream.Cons (x,xs), y::ys, a)  ->
+    Stream.cons x (rotate (xs, ys, Stream.cons y a))

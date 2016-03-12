@@ -46,9 +46,10 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="ImplicitRecursiveSlowdown/Queue.fs" />
-    <Compile Include="SkewBinary/RAList.fs" />
     <Compile Include="Bootstrapped/Queue.fs" />
+    <Compile Include="ImplicitRecursiveSlowdown/Queue.fs" />
+    <Compile Include="RealTime/Queue.fs" />
+    <Compile Include="SkewBinary/RAList.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

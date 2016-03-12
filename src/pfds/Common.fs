@@ -1,4 +1,19 @@
-﻿module pfds.Common
+﻿// ----------------------------------------------------------------------------------------------
+// Copyright 2015 Mårten Rånge
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------------------------
+module pfds.Common
 
 open System
 open System.Threading
@@ -34,33 +49,49 @@ type Delayed<'T>() =
 let inline DelayCreator (creator  : unit -> 'T) : Delayed<'T> = Delayed<'T> (creator)
 let inline DelayValue   (value    : 'T        ) : Delayed<'T> = DelayCreator (fun () -> value)
 
-let (|Force|) (d : Delayed<'T>) : 'T =
+let inline (|Force|) (d : Delayed<'T>) : 'T =
   Force d.Force
 
 [<RequireQualifiedAccess>]
 type StreamCell<'T> =
   | Empty
   | Cons  of 'T*Stream<'T>
-and Stream<'T> = Delayed<StreamCell<'T>>
+and [<RequireQualifiedAccess>] Stream<'T> = Delayed<StreamCell<'T>>
 
 [<RequireQualifiedAccess>]
 module Stream =
 //  [<GeneralizableValue>]
-  let empty () : Stream<'T> = DelayValue StreamCell.Empty
+  let inline empty () : Stream<'T> = DelayValue StreamCell.Empty
+
+  let inline cons (v : 'T) (s : Stream<'T>) : Stream<'T> =
+    DelayCreator (fun () -> StreamCell.Cons (v, s))
+
+  let inline delay (fs : unit -> Stream<'T>) : Stream<'T> =
+    DelayCreator (fun () -> let s = fs () in s.Force)
 
   module internal Details =
-    let rec skipLoop (i : int) (s : Stream<'T>) () : StreamCell<'T> =
+    let rec skipLoop (i : int) (s : Stream<'T>) () : Stream<'T> =
       match i, s with
-      | 0, Force s                        -> s
-      | _, Force StreamCell.Empty         -> StreamCell.Empty
+      | 0, _                              -> s
+      | _, Force StreamCell.Empty         -> empty ()
       | n, Force (StreamCell.Cons (_,vs)) -> skipLoop (i - 1) vs ()
+
+    let rec reverseLoop (f : Stream<'T>) (t : Stream<'T>) () : Stream<'T> =
+      match f with
+      | Force StreamCell.Empty            -> t
+      | Force (StreamCell.Cons (v,vs))    -> reverseLoop vs (cons v t) ()
 
   open Details
 
-  let isEmpty (s : Stream<'T>) : bool =
+  let inline isEmpty (s : Stream<'T>) : bool =
     match s with
     | Force StreamCell.Empty  -> true
     | _                       -> false
+
+  let inline (|Empty|Cons|) (s : Stream<'T>) =
+    match s with
+    | Force StreamCell.Empty          -> Empty
+    | Force (StreamCell.Cons (v,vs))  -> Cons (v, vs)
 
   let rec concat (l : Stream<'T>) (r : Stream<'T>) : Stream<'T> =
     match l with
@@ -74,11 +105,13 @@ module Stream =
     | n, Force (StreamCell.Cons (v,vs)) -> DelayCreator (fun () -> StreamCell.Cons (v, take (i - 1) vs))
 
   let skip (i : int) (s : Stream<'T>) : Stream<'T> =
-    DelayCreator (skipLoop i s)
+    skipLoop i s |> delay
+
+  let reverse (s : Stream<'T>) : Stream<'T> =
+    reverseLoop s (empty ()) |> delay
 
   let rec unfold (f : 'S -> ('T*'S) option) (s : 'S) : Stream<'T> =
     DelayCreator (fun () -> 
       match f s with
       | Some (vv, ss) -> StreamCell.Cons (vv, unfold f ss)
       | _ -> StreamCell.Empty)
-    
