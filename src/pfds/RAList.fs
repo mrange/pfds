@@ -1,5 +1,5 @@
 ﻿[<RequireQualifiedAccess>]
-module pfds.RAList
+module pfds.SkewBinary.RAList
 
 type Tree<'T> =
   | Leaf of 'T

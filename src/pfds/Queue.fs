@@ -1,7 +1,7 @@
 ﻿[<RequireQualifiedAccess>]
-module pfds.Queue
+module pfds.ImplicitRecursiveSlowdown.Queue
 
-open Common
+open pfds.Common
 
 type Digit<'T> =
   | Zero

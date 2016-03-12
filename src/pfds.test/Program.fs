@@ -1,7 +1,8 @@
 ﻿open System
 open System.Collections.Generic
 open FsCheck
-open pfds
+open pfds.ImplicitRecursiveSlowdown
+open pfds.SkewBinary
 
 
 #if DEBUG
