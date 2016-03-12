@@ -1,11 +1,42 @@
 ﻿open System
 open FsCheck
 
+module Test =
+  open pfds.Common
+
+  // Examples on different ways to implement a persistent queue in F#
+  //  From Chris Okasaki's book "Purely Functional Data Structures"
+  type TrivialQueue<'T>       = 'T list*'T list
+  type PhysicistsQueue<'T>    = 'T list*int*Delayed<'T list>*int*'T list
+  type BankersQueue<'T>       = int*Stream<'T>*int*Stream<'T>
+  type RealTimeQueue<'T>      = Stream<'T>*'T list*Stream<'T>
+  type BootstrappedQueue<'T>  =
+    | Empty
+    | Queue   of  int   * 'T list * BootstrappedQueue<Delayed<'T list>> * int * 'T list
+  type Digit<'T> =
+    | Zero
+    | One   of 'T
+    | Two   of 'T*'T
+  type ImplicitRecursiveSlowdownQueue<'T> =
+    | Shallow of Digit<'T>
+    | Deep    of Digit<'T>*Delayed<ImplicitRecursiveSlowdownQueue<'T*'T>>*Digit<'T>
+
 #if DEBUG
 let config = { Config.Quick with MaxTest = 10 }
 #else
 let config = { Config.Quick with MaxTest = 1000 }
 #endif
+
+[<RequireQualifiedAccess>]
+type QueueActions<'T> =
+  | Push of 'T
+  | Pop
+
+[<RequireQualifiedAccess>]
+type RAListActions<'T> =
+  | Lookup      of float
+  | Push        of 'T
+  | Pop
 
 module Oracles =
   open System.Collections.Generic
@@ -37,11 +68,6 @@ module Oracles =
 module TestRAList =
   open pfds.SkewBinary
 
-  type RAListActions<'T> =
-    | Lookup      of float
-    | Push        of 'T
-    | Pop
-
   let coerce v = 
     match v with
     | _ when Double.IsNaN v -> 0.
@@ -55,10 +81,10 @@ module TestRAList =
       let rec loop (ral : RAList.Type<int>) actions =
         match actions with
         | [] -> true, ral
-        | (Push v)::actions ->
+        | (RAListActions.Push v)::actions ->
           push v
           loop (RAList.cons v ral) actions
-        | Pop::actions ->
+        | RAListActions.Pop::actions ->
           if isEmpty () |> not && ral |> RAList.isEmpty |> not then
             let e     = pop ()
             let h, t  = RAList.headAndTail ral
@@ -69,7 +95,7 @@ module TestRAList =
             loop ral actions
           else
             false, ral
-        | (Lookup ir)::actions ->
+        | (RAListActions.Lookup ir)::actions ->
           let l = length ()
           if l = 0 then
             loop ral actions
@@ -110,20 +136,16 @@ module TestRAList =
 module TestQueue =
   open pfds.ImplicitRecursiveSlowdown
 
-  type QueueActions<'T> =
-    | Push of 'T
-    | Pop
-
   type Properties() =
     static member ``Queue's behavior is equivalent with to oracle's`` (actions : QueueActions<int> list) =
       let isEmpty, push, pop, toArray = Oracles.queue<int> ()
       let rec loop (q : Queue.Type<int>) actions =
         match actions with
         | [] -> true, q
-        | (Push v)::actions ->
+        | (QueueActions.Push v)::actions ->
           push v
           loop (Queue.snoc q v) actions
-        | Pop::actions ->
+        | QueueActions.Pop::actions ->
           if isEmpty () |> not && q |> Queue.isEmpty |> not then
             let e     = pop ()
             let h, t  = Queue.headAndTail q
@@ -147,12 +169,8 @@ module TestQueue =
   let test () =
     Check.All<Properties> config
 
-module TestBSQueue =
+module TestBootstappedQueue =
   open pfds.Bootstrapped
-
-  type QueueActions<'T> =
-    | Push of 'T
-    | Pop
 
   type Properties() =
     static member ``Queue's behavior is equivalent with to oracle's`` (actions : QueueActions<int> list) =
@@ -160,10 +178,10 @@ module TestBSQueue =
       let rec loop (q : Queue.Type<int>) actions =
         match actions with
         | [] -> true, q
-        | (Push v)::actions ->
+        | (QueueActions.Push v)::actions ->
           push v
           loop (Queue.snoc q v) actions
-        | Pop::actions ->
+        | QueueActions.Pop::actions ->
           if isEmpty () |> not && q |> Queue.isEmpty |> not then
             let e     = pop ()
             let h, t  = Queue.headAndTail q
@@ -190,7 +208,7 @@ module TestBSQueue =
 [<EntryPoint>]
 let main argv = 
   try
-    TestBSQueue.test ()
+    TestBootstappedQueue.test ()
     TestQueue.test ()
     TestRAList.test ()
     0

@@ -10,7 +10,7 @@ type Digit<'T> =
 
 type Type<'T> =
   | Shallow of Digit<'T>
-  | Deep    of Digit<'T>*NoLockLazy<Type<'T*'T>>*Digit<'T>
+  | Deep    of Digit<'T>*Delayed<Type<'T*'T>>*Digit<'T>
 
 [<GeneralizableValue>]
 let empty : Type<'T> = Shallow Zero
@@ -22,19 +22,19 @@ let inline isEmpty (q : Type<'T>) : bool =
 
 let rec snoc<'T> (q : Type<'T>) (v : 'T) : Type<'T> =
   match q with
-  | Shallow Zero                    -> Shallow (One v)
-  | Shallow (One v1)                -> Shallow (Two (v1,v))
-  | Shallow d                       -> Deep (d, DelayValue empty, One v)
-  | Deep (ld, drq, Zero)            -> Deep (ld, drq, One v)
-  | Deep (ld, drq, One v1)          -> Deep (ld, drq, Two (v1,v))
-  | Deep (ld, Run rq, Two (v1, v2)) -> Deep (ld, DelayCreator (fun () -> snoc rq (v1, v2)), One v)
+  | Shallow Zero                      -> Shallow (One v)
+  | Shallow (One v1)                  -> Shallow (Two (v1,v))
+  | Shallow d                         -> Deep (d, DelayValue empty, One v)
+  | Deep (ld, drq, Zero)              -> Deep (ld, drq, One v)
+  | Deep (ld, drq, One v1)            -> Deep (ld, drq, Two (v1,v))
+  | Deep (ld, Force rq, Two (v1, v2)) -> Deep (ld, DelayCreator (fun () -> snoc rq (v1, v2)), One v)
 
 let rec headAndTail<'T> (q : Type<'T>) : 'T*Type<'T> =
   match q with
   | Shallow Zero                    -> failwith "headAndTail on empty Queue"
   | Shallow (One v1)                -> v1, empty
   | Shallow (Two (v1, v2))          -> v1, Shallow (One v2)
-  | Deep (Zero, Run rq, td)         ->
+  | Deep (Zero, Force rq, td)       ->
     match rq, td with
     | Shallow Zero, Zero            -> failwith "headAndTail on invalid Queue"
     | Shallow Zero, One v1          -> v1, empty
@@ -49,7 +49,7 @@ let rec isValid<'T> (q : Type<'T>) : bool =
   match q with
   | Shallow _               -> true
   | Deep (_, _, Zero)       -> false
-  | Deep (_, Run rq, _)     -> isValid rq
+  | Deep (_, Force rq, _)   -> isValid rq
 
 let toSeq (q : Type<'T>) : seq<'T> =
   seq {
